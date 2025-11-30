@@ -1,0 +1,2727 @@
+<!-- ===============================
+File: Index.html (Admin)  with inactivity and no-flash boot fixes
+=============================== -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="referrer" content="same-origin" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Admin App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <style>
+    :root{
+      --mx: 940px;
+      --pad: 16px;
+      --gap: 12px;
+      --ring: 1px solid #e5e7eb;
+      --muted: #5f6b7a;
+      --bg-soft: #fafafa;
+      --bg-page: #ffffff;
+      --radius: 10px;
+      --shadow: 0 1px 2px rgba(0,0,0,.06), 0 6px 24px rgba(0,0,0,.06);
+      --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * , *::before , *::after { box-sizing: border-box; }
+    html , body { height: 100%; }
+    html { overflow-x: hidden; }
+    body {
+      font-family: var(--font);
+      font-size: 15px;
+      margin: 0;
+      background: var(--bg-page);
+      color: #0f172a;
+      line-height: 1.45;
+      overflow-x: clip;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    /* boot hiding so refresh never flashes sign in */
+    body.boot #view-signin,
+    body.boot #view-admin,
+    body.boot #view-change-pin { display: none !important; }
+    #boot-splash{
+      display: none;
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+    }
+    body.boot #boot-splash{ display: block; }
+
+    .container{
+      max-width: var(--mx);
+      width: min(100%, var(--mx));
+      margin-left: auto;
+      margin-right: auto;
+      padding-top: 20px;
+      padding-bottom: 56px;
+      padding-left: max(var(--pad), env(safe-area-inset-left, 0px));
+      padding-right: max(var(--pad), env(safe-area-inset-right, 0px));
+      contain: inline-size;
+    }
+
+    .hidden { display:none !important; }
+
+    h1, h2, h3, h4 { margin: 0 0 8px; line-height: 1.2; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 17px; }
+    h4 { font-size: 14px; }
+    p  { margin: 8px 0 12px; }
+    .muted{ color: var(--muted); }
+
+    input, button, select {
+      padding: 8px 10px;
+      margin: 4px 0;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font: inherit;
+      font-size: 16px; /* prevent input focus zoom on iOS */
+    }
+    input, select { width: 100%; }
+    button{
+      background: #0ea5e9;
+      color: #fff;
+      border: 0;
+      cursor: pointer;
+    }
+    button:hover{ filter: brightness(.98); }
+    button:disabled{ opacity:.6; cursor:not-allowed; }
+
+    .stack{ display: grid; gap: var(--gap); }
+    .stack-lg{ display: grid; gap: 16px; }
+    .row{ display: grid; gap: 10px; }
+    .inline-2{ display: grid; gap: 10px; grid-template-columns: 1fr; }
+    .inline-3{ display: grid; gap: 10px; grid-template-columns: 1fr; }
+    .btns{ display: grid; gap: 8px; grid-auto-flow: row; }
+    .right { margin-left: auto; }
+
+    fieldset{ border: 0; padding: 0; margin: 0 0 18px; }
+    legend{ font-weight: 700; margin-bottom: 6px; }
+    .card{
+      background: #fff;
+      border: var(--ring);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+    .section{ margin-bottom: 18px; }
+
+    .kpis{ display: grid; gap: 10px; }
+    .kpi{
+      border: var(--ring);
+      border-radius: 10px;
+      background: var(--bg-soft);
+      padding: 10px 12px;
+    }
+    .kpi b{ display:block; font-size: 17px; margin: 2px 0; }
+    .kpi small{ color: var(--muted); }
+
+    .table-wrap{
+      border: var(--ring);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      contain: content;
+    }
+    .table-scroll{
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table{ border-collapse: collapse; width: 100%; min-width: 0; }
+    th, td{ border-top: 1px solid #f1f5f9; padding: 7px 9px; font-size: 12.5px; vertical-align: top; word-break: break-word; }
+    thead th{ background: #f8fafc; text-align: left; position: sticky; top: 0; }
+    td.num, th.num { text-align: right; }
+
+    @media (max-width: 640px){
+      .table-scroll{ overflow-x: hidden; overflow-y: visible; }
+      table{ display: block; }
+      thead{ display: none; }
+      tbody{ display: grid; gap: 10px; }
+      tbody tr{
+        display: grid;
+        gap: 6px;
+        padding: 10px;
+        border: 1px solid #f1f5f9;
+        border-radius: 10px;
+        background: #fff;
+      }
+      tbody td{ display: grid; gap: 2px; }
+      tbody td::before{
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--muted);
+      }
+      tbody td.num{ justify-items: end; }
+    }
+
+    @media (max-width: 360px){
+      .card{ padding: 10px; }
+      body{ font-size: 14px; }
+      button{ padding: 5px 9px; font-size: .9em; }
+    }
+
+    @media (min-width: 960px){
+      .inline-2{ grid-template-columns: 1fr 1fr; }
+      .inline-3{ grid-template-columns: 1fr 1fr 1fr; }
+      .btns{ grid-auto-flow: column; justify-content: start; }
+      .kpis{ grid-template-columns: 1fr 1fr; }
+    }
+
+    #app-banner{ position: sticky; top: 0; z-index: 1000; margin-bottom: 12px; }
+    .banner{
+      border: 1px solid transparent;
+      padding: 10px 12px;
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: start;
+      gap: 8px;
+    }
+    .banner-info    { background:#f0f6ff; border-color:#cfe3ff; }
+    .banner-success { background:#edf9f0; border-color:#cdeed8; }
+    .banner-error   { background:#fff0f0; border-color:#ffd6d6; }
+    .banner strong { min-width:64px; }
+    .banner button.close{
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #toast-container{
+      position: fixed; right: 16px; bottom: 16px; z-index: 1001;
+      display: grid; gap: 8px; max-width: 360px;
+    }
+    .toast{
+      padding: 10px 12px;
+      border: 1px solid transparent; border-radius: 10px;
+      background: #edf9f0;
+      box-shadow: 0 2px 12px rgba(0,0,0,.12);
+    }
+    .toast.info{ background:#f0f6ff; }
+    .toast.error{ background:#fff0f0; }
+    .toast .close{ background: transparent; border: 0; cursor: pointer; float: right; }
+
+    /* ==== adaptive centering and overflow hardening ==== */
+    .container{ padding-inline: 16px; }
+    @supports (padding: max(0px)){
+      .container{
+        padding-inline-start: max(16px, calc(env(safe-area-inset-left, 0px)));
+        padding-inline-end:   max(16px, calc(env(safe-area-inset-right, 0px)));
+      }
+    }
+    .stack > *,
+    .inline-2 > *,
+    .inline-3 > *,
+    .btns > * { min-width: 0; }
+
+    #view-admin{
+      display: grid;
+      justify-items: center;
+      font-size: .90em;
+    }
+    #view-admin .card{
+      width: min(100%, 920px);
+      margin-inline: auto;
+      max-width: 100%;
+    }
+    #view-admin .table-wrap,
+    #view-admin .table-scroll,
+    #view-admin table{ max-width: 100%; }
+
+    :where(p, small, li, td, th, button, input, label, code){
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    html, body { overflow-x: hidden; }
+
+    @media (max-width: 640px){
+      #view-admin{ justify-items: center; }
+      #view-admin .card{ margin-left: auto; margin-right: auto; }
+    }
+
+    html, body{
+      overflow-x: hidden;            /* no horizontal scroll */
+      overscroll-behavior-x: none;   /* no side bounce or scroll chaining */
+      touch-action: pan-y pinch-zoom;/* allow vertical pan, keep pinch zoom */
+    }
+
+    .container{
+      max-width: var(--mx);
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+      contain: inline-size;
+    }
+
+    /* if any child can grow wider, contain it */
+    .table-wrap,
+    .table-scroll,
+    #view-admin,
+    #view-admin .card{
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+  </style>
+</head>
+<body class="boot">
+  <div class="container stack">
+    <!-- splash during boot so refresh does not flash sign in -->
+    <div id="boot-splash" role="status" aria-live="polite">Loading…</div>
+
+    <!-- Page banner container -->
+    <div id="app-banner" aria-live="polite" role="status"></div>
+    <!-- Toasts -->
+    <div id="toast-container" aria-live="polite"></div>
+
+    <!-- Sign in -->
+    <section id="view-signin" class="section card stack">
+      <h2>Admin Sign In</h2>
+      <form id="form-signin" class="stack" novalidate>
+        <label>Username
+          <input id="si-username" required>
+        </label>
+        <label>Six digit PIN
+          <input id="si-pin" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required>
+        </label>
+        <button type="submit" class="right">Sign In</button>
+      </form>
+
+      <!-- First Admin Bootstrap -->
+      <fieldset id="first-admin" class="hidden section">
+        <legend>Set Up First Master Admin</legend>
+        <form id="form-bootstrap" class="inline-2" novalidate>
+          <label>Username
+            <input id="ba-username" placeholder="master.admin" required>
+          </label>
+          <label>Six digit PIN
+            <input id="ba-pin" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required>
+          </label>
+          <button type="submit">Create Master Admin</button>
+        </form>
+        <div class="muted" id="ba-msg"></div>
+      </fieldset>
+
+      <p class="muted">First time. In the Script Editor run <code>adminCreateAdmin('yourname','123456')</code> once to create your admin account.</p>
+      <div id="si-msg" class="muted"></div>
+    </section>
+
+    <!-- Admin -->
+    <section id="view-admin" class="hidden stack">
+      <div class="card stack">
+        <h2>Admin Dashboard</h2>
+        <p id="whoami" class="muted">—</p>
+        <p id="session-timer" class="muted">Session: —</p>
+
+        <fieldset class="section stack">
+          <legend>Visibility Dashboard</legend>
+
+          <div class="btns">
+            <button id="btn-vis-refresh">Refresh</button>
+          </div>
+
+          <!-- KPIs -->
+          <div class="kpis">
+            <div class="kpi">
+              <div class="muted">Users</div>
+              <div><b id="kpi-users-total">—</b> total</div>
+              <small class="muted">+<span id="kpi-users-new-today">—</span> today   +<span id="kpi-users-new-7d">—</span> seven days</small>
+            </div>
+            <div class="kpi">
+              <div class="muted">Merchants</div>
+              <div><b id="kpi-merch-total">—</b> total</div>
+              <small class="muted"><span id="kpi-merch-active">—</span> active   <span id="kpi-merch-inactive">—</span> inactive</small>
+            </div>
+            <div class="kpi">
+              <div class="muted">Active Sessions</div>
+              <div>Users <b id="kpi-sess-user">—</b></div>
+              <div>Merch <b id="kpi-sess-merchant">—</b></div>
+            </div>
+            <div class="kpi">
+              <div class="muted">Transactions</div>
+              <div>Today <b id="kpi-tx-today">—</b>  <span id="kpi-pts-today">—</span> pts</div>
+              <small class="muted">Seven days <b id="kpi-tx-7d">—</b>   avg <span id="kpi-tx-avg7d">—</span> pts per tx</small>
+            </div>
+            <div class="kpi">
+              <div class="muted">Balances</div>
+              <div>Non zero <b id="kpi-bal-nonzero">—</b></div>
+              <small class="muted">Avg <span id="kpi-bal-avg">—</span> pts</small>
+            </div>
+            <div class="kpi">
+              <div class="muted">Errors</div>
+              <div>Last twenty four hours <b id="kpi-errors-24h">—</b></div>
+            </div>
+            <div class="kpi">
+              <div class="muted">Storage warnings</div>
+              <ul id="storage-warns" style="margin:6px 0; padding-left: 16px;"></ul>
+            </div>
+          </div>
+
+          <!-- Should have tables -->
+          <div class="stack">
+            <div class="card stack">
+              <h4>Inactive Merchants thirty plus days</h4>
+              <div class="table-wrap">
+                <div class="table-scroll">
+                  <table>
+                    <thead><tr><th>MerchantId</th><th>Name</th></tr></thead>
+                    <tbody id="tbl-inactive30"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="card stack">
+              <h4>Top Merchants seven days</h4>
+              <div class="table-wrap">
+                <div class="table-scroll">
+                  <table>
+                    <thead><tr><th>MerchantId</th><th class="num">TX</th><th class="num">Points</th></tr></thead>
+                    <tbody id="tbl-top-7d"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Secondary summaries -->
+          <div class="stack">
+            <div class="card stack">
+              <div class="muted">Points Circulation this month</div>
+              <div>Collect <b id="circ-collect">—</b></div>
+              <div>Redeem <b id="circ-redeem">—</b></div>
+              <small class="muted">Redemption ratio <span id="circ-ratio">—</span></small>
+            </div>
+            <div class="card stack">
+              <div class="muted">System Health</div>
+              <div>Last admin login <b id="sys-last-admin">—</b></div>
+              <div>Last purge <b id="sys-last-purge">—</b></div>
+              <small class="muted">Next housekeeping <span id="sys-next-house">—</span></small>
+            </div>
+          </div>
+
+          <!-- Nice to have -->
+          <div class="stack">
+            <div class="card stack">
+              <h4>Top Ten Users by Points</h4>
+              <div class="table-wrap">
+                <div class="table-scroll">
+                  <table>
+                    <thead><tr><th>MemberId</th><th class="num">Points</th></tr></thead>
+                    <tbody id="tbl-top-users"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="card stack">
+              <h4>Most Active Merchants unique members thirty days</h4>
+              <div class="table-wrap">
+                <div class="table-scroll">
+                  <table>
+                    <thead><tr><th>MerchantId</th><th class="num">Unique Members</th></tr></thead>
+                    <tbody id="tbl-most-active-merch"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="card stack">
+              <div class="muted">Churn no activity sixty plus days</div>
+              <div><b id="churn-60d">—</b></div>
+            </div>
+            <div class="card stack">
+              <div class="muted">Geo Top Countries</div>
+              <ul id="geo-countries" style="margin:6px 0; padding-left: 16px;"></ul>
+            </div>
+            <div class="card stack">
+              <div class="muted">Alerts</div>
+              <ul id="alerts" style="margin:6px 0; padding-left: 16px;"></ul>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Logs -->
+        <fieldset class="section card stack">
+          <legend>Error Logging</legend>
+
+          <div class="inline-3">
+            <label>Search text
+              <input id="log-q" placeholder="type or message contains">
+            </label>
+            <label>Type exact
+              <input id="log-type" placeholder="example admin_purge_user_sessions">
+            </label>
+            <label>Only errors
+              <select id="log-onlyerr">
+                <option value="no">no</option>
+                <option value="yes" selected>yes</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="inline-3">
+            <label>From date or ISO
+              <input id="log-from" placeholder="YYYY-MM-DD or ISO">
+            </label>
+            <label>To date or ISO
+              <input id="log-to" placeholder="YYYY-MM-DD or ISO">
+            </label>
+            <label>Limit
+              <input id="log-limit" type="number" min="1" max="1000" value="10">
+            </label>
+          </div>
+
+          <div class="btns">
+            <button id="btn-logs-apply">Apply</button>
+            <button id="btn-refresh-logs">Refresh</button>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-scroll">
+              <table id="tbl-logs">
+                <thead><tr><th>At</th><th>Type</th><th>Message</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+      <!-- Recent TX by Staff -->
+      <fieldset class="section card stack">
+        <legend>Recent TX by Staff Audit</legend>
+        <div class="inline-3">
+          <label>Staff Username
+            <input id="rtx-username" placeholder="optional">
+          </label>
+          <label>Limit
+            <input id="rtx-limit" type="number" min="1" max="200" value="50">
+          </label>
+          <div class="btns"><button id="btn-rtx-load">Load</button></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table id="tbl-rtx">
+              <thead><tr><th>At</th><th>Member</th><th>Merchant</th><th>Type</th><th class="num">Points</th><th>Staff</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Config -->
+      <fieldset class="section card stack">
+        <legend>Config</legend>
+        <div class="stack">
+          <div>User DB <span id="userdb">—</span></div>
+          <div>Merchant DB <span id="merchantdb">—</span></div>
+          <div>Admin App Version <span id="cfg-version">dev</span></div>
+        </div>
+        <div class="inline-2">
+          <label>Set User DB ID
+            <input id="inp-userdb" placeholder="Spreadsheet ID">
+          </label>
+          <div class="btns"><button id="btn-set-userdb">Save</button></div>
+        </div>
+        <div class="inline-2">
+          <label>Set Merchant DB ID
+            <input id="inp-merchantdb" placeholder="Spreadsheet ID">
+          </label>
+          <div class="btns"><button id="btn-set-merchantdb">Save</button></div>
+        </div>
+        <div class="inline-2">
+          <label>Master Admin Email
+            <input id="inp-master-email" placeholder="email@domain.com">
+          </label>
+          <div class="btns"><button id="btn-set-master-email">Save</button></div>
+        </div>
+        <div class="inline-2">
+          <label>Master Admin Username
+            <input id="inp-master-username" placeholder="admin username">
+          </label>
+          <div class="btns"><button id="btn-set-master-username">Save</button></div>
+        </div>
+        <p class="muted">Paste spreadsheet IDs from the URL. Merchant DB ID is optional but needed to create staff or purge merchant sessions.</p>
+      </fieldset>
+
+      <!-- Admins -->
+      <fieldset class="section card stack">
+        <legend>Admins</legend>
+        <div class="btns"><button id="btn-refresh-admins">Refresh List</button></div>
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table id="tbl-admins">
+              <thead><tr><th>Username</th><th>Created At</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="inline-3">
+          <label>New Admin Username
+            <input id="aa-username" placeholder="a z 0 9 . _ 3 to 32">
+          </label>
+          <label>Six digit PIN
+            <input id="aa-pin" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric">
+          </label>
+          <div class="btns"><button id="btn-add-admin">Add Admin</button></div>
+        </div>
+        <div id="aa-msg" class="muted"></div>
+
+        <div class="inline-3">
+          <label>Reset Sub Admin PIN Username
+            <input id="ra-username" placeholder="admin username" autocomplete="off">
+          </label>
+          <label>Temp PIN six digits
+            <input id="ra-pin" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="off">
+          </label>
+          <div class="btns"><button id="btn-reset-admin-pin">Reset Admin PIN master only</button></div>
+        </div>
+        <div id="ra-msg" class="muted"></div>
+
+        <div class="btns">
+          <button id="btn-master-selfreset">Email me a master reset link</button>
+        </div>
+      </fieldset>
+
+      <!-- Create Merchant -->
+      <fieldset class="section card stack">
+        <legend>Create Merchant</legend>
+        <div class="inline-2">
+          <label>Merchant Name
+            <input id="cm-name" placeholder="Sunny Cafe">
+          </label>
+          <div class="btns"><button id="btn-create-merchant">Create Merchant</button></div>
+        </div>
+        <div id="cm-msg" class="muted"></div>
+      </fieldset>
+
+      <!-- Merchant Management -->
+      <fieldset class="section card stack">
+        <legend>Merchant Management</legend>
+        <div class="btns"><button id="btn-merch-load">Load Merchants</button></div>
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table id="tbl-merchants">
+              <thead>
+                <tr>
+                  <th>MerchantId</th>
+                  <th>Name</th>
+                  <th>Active</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="merch-msg" class="muted"></div>
+      </fieldset>
+
+      <!-- Create Staff -->
+      <fieldset class="section card stack">
+        <legend>Create Staff</legend>
+        <div class="stack">
+          <label>Merchant ID
+            <input id="cs-merchant" placeholder="MRC-XXXXXX">
+          </label>
+          <label>Username
+            <input id="cs-username" placeholder="a z 0 9 . _ 3 to 32">
+          </label>
+          <label>Six digit PIN
+            <input id="cs-pin" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric">
+          </label>
+          <label>Role
+            <select id="cs-role">
+              <option value="staff">staff</option>
+              <option value="manager">manager</option>
+            </select>
+          </label>
+          <button id="btn-create-staff">Create Staff</button>
+          <div id="cs-msg" class="muted"></div>
+          <p class="muted">Note. This writes to the Merchant DB Staff sheet. Set the Merchant DB ID first.</p>
+        </div>
+      </fieldset>
+
+      <!-- Staff Management -->
+      <fieldset class="section card stack">
+        <legend>Staff Management</legend>
+        <div class="btns"><button id="btn-staff-load">Load Staff</button></div>
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table id="tbl-staff">
+              <thead>
+                <tr>
+                  <th>Username</th><th>MerchantId</th><th>Role</th><th>Active</th><th>MustChange</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="inline-3">
+          <label>Reset Staff or Manager PIN Username
+            <input id="rs-username" placeholder="staff username" autocomplete="off">
+          </label>
+          <label>Temp PIN six digits
+            <input id="rs-pin" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="off">
+          </label>
+          <div class="btns"><button id="btn-reset-staff-pin">Reset PIN</button></div>
+        </div>
+        <div id="rs-msg" class="muted"></div>
+      </fieldset>
+
+      <!-- Campaigns / Multipliers -->
+      <fieldset class="section card stack">
+        <legend>campaigns / Multipliers (Merchant-wide)</legend>
+
+        <div class="inline-3">
+          <label>Search (title or ID)
+            <input id="cpn-q" placeholder="contains">
+          </label>
+          <label>Merchant ID (optional filter)
+            <input id="cpn-merchant-filter" placeholder="MRC-XXXXXX">
+          </label>
+          <div class="btns"><button id="btn-cpn-load">Load</button></div>
+        </div>
+        <!-- NEW: Dropdown & Detail with Image Upload -->
+        <div class="inline-2">
+          <label>Browse existing campaigns
+            <select id="cpn-select">
+              <option value="">—</option>
+            </select>
+          </label>
+          <div class="btns">
+            <button id="btn-cpn-refresh-dd">Refresh list</button>
+          </div>
+        </div>
+
+        <div id="cpn-detail" class="card stack hidden" style="border: 1px dashed #e5e7eb;">
+          <div class="muted">Selected Campaign</div>
+          <div><b id="cd-id">—</b> · <span id="cd-title">—</span></div>
+          <div>Merchant <code id="cd-merchant">—</code></div>
+          <div>Multiplier x<span id="cd-mult">—</span></div>
+          <div>Start <span id="cd-start">—</span> · End <span id="cd-end">—</span></div>
+          <div>Min <span id="cd-min">—</span> · MaxRed <span id="cd-max">—</span> · Max/Customer <span id="cd-maxpc">—</span> · Budget <span id="cd-bud">—</span></div>
+          <div>Billing <span id="cd-bill">—</span> · CPR <span id="cd-cpr">—</span></div>
+          <div>Active <span id="cd-act">—</span></div>
+
+          <div class="inline-2">
+            <div>
+              <div class="muted">Current Image</div>
+              <div id="cd-img-wrap">
+                <img id="cd-img" alt="campaign" style="max-width: 220px; display: none;">
+                <div id="cd-noimg" class="muted">No image uploaded yet.</div>
+              </div>
+            </div>
+            <div>
+              <label>Upload/replace image (png/jpg/webp/gif)
+                <input id="cd-file" type="file" accept="image/*">
+              </label>
+              <div class="btns">
+                <button id="btn-upload-img">Upload</button>
+              </div>
+              <small class="muted">Recommended ≤ 600px wide. Will be publicly viewable (anyone with link).</small>
+              <div id="cd-msg" class="muted"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table id="tbl-campaigns">
+              <thead>
+                <tr>
+                  <th>CampaignId</th>
+                  <th>MerchantId</th>
+                  <th>Title</th>
+                  <th class="num">x</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th class="num">MinSpend</th>
+                  <th class="num">MaxRed</th>
+                  <th class="num">Max/Customer</th>
+                  <th class="num">Budget</th>
+                  <th>Billing</th>
+                  <th class="num">Cost/Red</th>
+                  <th>Active</th>
+                  <th>Image</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+
+          </div>
+        </div>
+
+        <h4>Create New Campaign</h4>
+        <div class="stack">
+          <label>Merchant ID
+            <input id="nc-merchant" placeholder="MRC-XXXXXX">
+          </label>
+          <label>Title
+            <input id="nc-title" placeholder="3x points weekend">
+          </label>
+          <div class="inline-3">
+            <label>Multiplier
+              <input id="nc-mult" type="number" min="1" value="2">
+            </label>
+            <label>Start Date
+              <input id="nc-start" type="date">
+            </label>
+            <label>End Date
+              <input id="nc-end" type="date">
+            </label>
+          </div>
+          <div class="inline-3">
+            <label>Min Spend (optional)
+              <input id="nc-min" type="number" min="0" value="0">
+            </label>
+            <label>Max Redemptions (0=∞)
+              <input id="nc-max" type="number" min="0" value="0">
+            </label>
+            <label>Max/Customer (0=∞)
+              <input id="nc-max-percust" type="number" min="0" value="0">
+            </label>
+          </div>
+          <div class="inline-3">
+            <label>Budget Cap (0=none)
+              <input id="nc-budget" type="number" min="0" value="0">
+            </label>
+            <label>Billing Model
+              <select id="nc-billing">
+                <option value="per_redemption">per_redemption</option>
+                <option value="flat_monthly">flat_monthly</option>
+              </select>
+            </label>
+            <label>Cost per Redemption
+              <input id="nc-cpr" type="number" min="0" value="0">
+            </label>
+          </div>
+          <div class="inline-3">
+            <label>Active
+              <select id="nc-active">
+                <option value="yes" selected>yes</option>
+                <option value="no">no</option>
+              </select>
+            </label>
+          </div>
+          <div class="btns">
+            <button id="btn-create-cpn">Create Campaign</button>
+          </div>
+          <div id="cpn-msg" class="muted"></div>
+        </div>
+      </fieldset>
+
+      <!-- Campaign Requests (from Merchant App) -->
+      <fieldset class="section card stack">
+        <legend>Campaign Requests (Merchant)</legend>
+
+        <div class="inline-3">
+          <label>Status
+            <select id="rq-status">
+              <option value="pending" selected>pending</option>
+              <option value="">any</option>
+              <option value="approved">approved</option>
+              <option value="rejected">rejected</option>
+              <option value="cancelled">cancelled</option>
+            </select>
+          </label>
+          <label>Request Type
+            <select id="rq-type">
+              <option value="">any</option>
+              <option value="new">new</option>
+              <option value="renew">renew</option>
+              <option value="edit">edit</option>
+              <option value="deactivate">deactivate</option>
+            </select>
+          </label>
+          <label>Merchant ID (optional)
+            <input id="rq-merchant" placeholder="MRC-XXXXXX">
+          </label>
+        </div>
+
+        <div class="inline-2">
+          <label>Search (title or request ID)
+            <input id="rq-q" placeholder="contains">
+          </label>
+          <div class="btns">
+            <button id="btn-rq-load">Load</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table id="tbl-requests">
+              <thead>
+                <tr>
+                  <th>RequestId</th>
+                  <th>MerchantId</th>
+                  <th>Type</th>
+                  <th>Title</th>
+                  <th class="num">x</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th class="num">Min</th>
+                  <th class="num">MaxRed</th>
+                  <th class="num">Max/Customer</th>
+                  <th class="num">Budget</th>
+                  <th>Billing</th>
+                  <th class="num">CPR</th>
+                  <th>Status</th>
+                  <th>CreatedBy</th>
+                  <th>CreatedAt</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="rq-msg" class="muted"></div>
+      </fieldset>
+
+      <fieldset class="section card stack">
+        <legend>Live Coupons Management</legend>
+        <div class="btns">
+          <button id="btn-live-coupons-load">Load Live Coupons</button>
+        </div>
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table id="tbl-live-coupons">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>MerchantId</th>
+                  <th>Mode</th>
+                  <th>Type</th>
+                  <th class="num">Value</th>
+                  <th class="num">Used</th>
+                  <th>Active</th>
+                  <th>Window</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <h4>Create/Update Coupon (Admin Direct)</h4>
+        <form id="form-create-coupon" class="stack" novalidate>
+          <label>Code
+            <input id="nc-cpn-code" placeholder="WELCOME50" required>
+          </label>
+          <label>Merchant ID
+            <input id="nc-cpn-merchant" placeholder="MRC-XXXXXX" required>
+          </label>
+          <div class="inline-3">
+            <label>Mode
+              <select id="nc-cpn-mode">
+                <option value="">(Both)</option>
+                <option value="COLLECT">COLLECT</option>
+                <option value="REDEEM">REDEEM</option>
+              </select>
+            </label>
+            <label>Type
+              <select id="nc-cpn-type" required>
+                <option value="BONUS">BONUS</option>
+                <option value="DISCOUNT">DISCOUNT</option>
+              </select>
+            </label>
+            <label>Value (points)
+              <input id="nc-cpn-value" type="number" min="1" value="50" required>
+            </label>
+          </div>
+          <div class="inline-3">
+            <label>Max Uses (0=∞)
+              <input id="nc-cpn-max" type="number" min="0" value="0">
+            </label>
+            <label>Per-Member Limit (0=∞)
+              <input id="nc-cpn-pm" type="number" min="0" value="0">
+            </label>
+            <label>Notes (optional)
+              <input id="nc-cpn-notes">
+            </label>
+          </div>
+          <div class="inline-2">
+            <label>Start Date (optional)
+              <input id="nc-cpn-start" type="date">
+            </label>
+            <label>End Date (optional)
+              <input id="nc-cpn-end" type="date">
+            </label>
+          </div>
+          <div class="btns">
+            <button type="submit" id="btn-create-cpn-direct">Create/Update Coupon</button>
+          </div>
+        </form>
+        <div id="create-cpn-msg" class="muted"></div>
+      </fieldset>
+      <!-- Coupon Requests (Merchant) -->
+      <fieldset class="section card stack">
+        <legend>Coupon Requests (Merchant)</legend>
+
+        <div class="inline-3">
+          <label>Status
+            <select id="cpnReqStatus">
+              <option value="">any</option>
+              <option value="pending" selected>pending</option>
+              <option value="approved">approved</option>
+              <option value="rejected">rejected</option>
+            </select>
+          </label>
+          <label>Merchant ID (optional)
+            <input id="cpnReqMerchant" placeholder="MRC-XXXXXX">
+          </label>
+          <label>Search (code or requestId)
+            <input id="cpnReqQuery" placeholder="contains">
+          </label>
+        </div>
+
+        <div class="btns">
+          <button id="btn-cpnreq-load">Load</button>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table id="tbl-cpnreq">
+              <thead>
+                <tr>
+                  <th>RequestId</th>
+                  <th>MerchantId</th>
+                  <th>Code</th>
+                  <th>Mode</th>
+                  <th>Type</th>
+                  <th class="num">Value</th>
+                  <th class="num">MaxUses</th>
+                  <th class="num">PerMember</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Status</th>
+                  <th>CreatedBy</th>
+                  <th>CreatedAt</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="cpnReqTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="cpn-req-msg" class="muted"></div>
+      </fieldset>
+
+      <!-- Purge -->
+      <fieldset class="section card stack">
+        <legend>Purge</legend>
+        <div class="btns">
+          <button id="btn-purge-user-sessions">Purge User Sessions one hundred twenty plus minutes</button>
+          <button id="btn-purge-merchant-sessions">Purge Merchant Sessions one hundred twenty plus minutes</button>
+          <button id="btn-purge-linktokens">Purge Old Link Tokens</button>
+          <button id="btn-purge-resettokens">Purge Reset Tokens</button>
+        </div>
+      </fieldset>
+
+      <!-- Exports -->
+      <fieldset class="section card stack">
+        <legend>Exports</legend>
+        <div class="btns">
+          <button id="btn-export-balances">Export Balances CSV</button>
+          <button id="btn-export-tx">Export Transactions CSV</button>
+        </div>
+      </fieldset>
+
+      <!-- Members and Campaigns -->
+      <fieldset class="section card stack">
+        <legend>Members</legend>
+        <div class="inline-3">
+          <label>Search name or email or member
+            <input id="mc-q" placeholder="john or mail">
+          </label>
+          <label>Pref Comms
+            <select id="mc-pref">
+              <option value="">any</option>
+              <option value="email">email</option>
+              <option value="sms">sms</option>
+              <option value="whatsapp">whatsapp</option>
+            </select>
+          </label>
+          <label>Opt in marketing
+            <select id="mc-opt">
+              <option value="any">any</option>
+              <option value="yes">yes</option>
+              <option value="no">no</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="inline-3">
+          <label>UTM Source
+            <input id="mc-usrc" placeholder="contains">
+          </label>
+          <label>UTM Medium
+            <input id="mc-umed" placeholder="contains">
+          </label>
+          <label>UTM Campaign
+            <input id="mc-ucamp" placeholder="contains">
+          </label>
+        </div>
+
+        <div class="inline-2">
+          <label>City
+            <input id="mc-city" placeholder="contains">
+          </label>
+          <label>Country
+            <input id="mc-country" placeholder="contains">
+          </label>
+        </div>
+
+        <div class="btns">
+          <button id="btn-mc-load">Load</button>
+          <button id="btn-mc-summary">Summary</button>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table id="tbl-members">
+              <thead>
+                <tr>
+                  <th>MemberId</th><th>Name</th><th>Email</th><th>Pref</th>
+                  <th>Phone</th><th>WA</th><th>Opt in</th>
+                  <th>UTM Source</th><th>UTM Medium</th><th>UTM Campaign</th>
+                  <th>City</th><th>Country</th><th>Created</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="mc-msg" class="muted"></div>
+      </fieldset>
+
+      <div class="card btns">
+        <button id="btn-logout" class="right">Log Out</button>
+      </div>
+    </section>
+
+    <!-- Change PIN -->
+    <section id="view-change-pin" class="hidden section card stack">
+      <h2>Change Your PIN</h2>
+      <p>Your temporary PIN has expired. You must set a new PIN to continue.</p>
+      <form id="form-change-pin" class="stack" novalidate>
+        <input type="hidden" id="cp-username">
+        <label>Temporary PIN six digits
+          <input id="cp-old-pin" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required>
+        </label>
+        <label>New six digit PIN
+          <input id="cp-new-pin" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required>
+        </label>
+        <label>Confirm New PIN
+          <input id="cp-confirm-pin" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required>
+        </label>
+        <button type="submit" class="right">Set New PIN</button>
+      </form>
+      <div id="cp-msg" class="muted"></div>
+    </section>
+
+    <footer style="margin-top: 16px; font-size: 12px; text-align: right; color: #6b7280;">
+      Cashbeik Admin App version <span id="app-version-text"></span>
+    </footer>
+  </div>
+
+  <!-- script -->
+  <script>
+  const APP_VERSION = '<?= appVersion ?>' || 'dev';
+
+  function $(id){ return document.getElementById(id); }
+
+  function setVersionBadge_(){
+    const el = document.getElementById('app-version-text');
+    if (el) el.textContent = APP_VERSION || 'dev';
+  }
+
+  function normalizeViewport(opts){
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+
+    const original = meta.getAttribute('content') || 'width=device-width, initial-scale=1, viewport-fit=cover';
+    const forced = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+    meta.setAttribute('content', forced);
+
+    const zeroX = () => {
+      if (document.scrollingElement) document.scrollingElement.scrollLeft = 0;
+      if (window.scrollX !== 0) window.scrollTo(0, window.scrollY);
+    };
+    zeroX();
+
+    const vv = window.visualViewport || null;
+    let tries = 0;
+    const done = () => {
+      meta.setAttribute('content', original.includes('initial-scale=') ? original : original + ', initial-scale=1');
+      zeroX();
+    };
+
+    const tick = () => {
+      tries += 1;
+      zeroX();
+      const ok = !vv || Math.abs((vv.scale || 1) - 1) < 0.01 || tries > 8;
+      if (ok) {
+        setTimeout(done, 50);
+      } else {
+        requestAnimationFrame(tick);
+      }
+    };
+    requestAnimationFrame(tick);
+  }
+
+
+  /* responsive table labels */
+  function applyResponsiveLabels_(table){
+    if (!table || !table.tHead) return;
+    const headers = Array.from(table.tHead.querySelectorAll('th')).map(th => th.textContent.trim());
+    const rows = table.tBodies[0] ? Array.from(table.tBodies[0].rows) : [];
+    rows.forEach(tr => {
+      Array.from(tr.cells).forEach((td, i) => {
+        const label = headers[i] || '';
+        if (label && td.getAttribute('data-label') !== label) {
+          td.setAttribute('data-label', label);
+        }
+      });
+    });
+  }
+  function enableAutoLabeling_(){
+    const all = document.querySelectorAll('table');
+    all.forEach(applyResponsiveLabels_);
+    const obs = new MutationObserver(muts => {
+      const seen = new Set();
+      muts.forEach(m => {
+        const t = m.target && m.target.closest ? m.target.closest('table') : null;
+        if (t && !seen.has(t)) { seen.add(t); applyResponsiveLabels_(t); }
+      });
+    });
+    document.querySelectorAll('table tbody').forEach(tb => {
+      obs.observe(tb, { childList: true, subtree: true });
+    });
+  }
+
+  // Page banner helpers
+  let __bannerTimer = null;
+  function clearBanner(){
+    clearTimeout(__bannerTimer);
+    __bannerTimer = null;
+    const c = $('app-banner');
+    if (c) c.innerHTML = '';
+  }
+  function showBanner(kind, message, opts){
+    clearBanner();
+    const c = $('app-banner'); if (!c) return;
+    const type = (kind||'info').toLowerCase();
+    const cls = type === 'success' ? 'banner-success' : type === 'error' ? 'banner-error' : 'banner-info';
+    const label = type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info';
+    const el = document.createElement('div');
+    el.className = 'banner ' + cls;
+    el.innerHTML = '<strong>'+label+':</strong><span>'+String(message||'')+'</span>' +
+                  '<button class="close" aria-label="Close" title="Close">×</button>';
+    el.querySelector('button.close').onclick = clearBanner;
+    c.appendChild(el);
+
+    const shouldScroll = opts && 'scroll' in opts ? !!opts.scroll : (type === 'error');
+    if (shouldScroll) {
+      const r = c.getBoundingClientRect();
+      const fullyVisible = r.top >= 0 && r.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+      if (!fullyVisible) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    const ms = opts && opts.persist ? 0 : 6000;
+    if (ms > 0) __bannerTimer = setTimeout(clearBanner, ms);
+  }
+
+  function show(view){
+    const a = $('view-admin'), s = $('view-signin'), c = $('view-change-pin');
+    // ensure boot splash is gone when we explicitly switch views
+    document.body.classList.remove('boot');
+    const splash = $('boot-splash'); if (splash) splash.style.display = 'none';
+
+    if (view==='admin'){ a.classList.remove('hidden'); s.classList.add('hidden'); c.classList.add('hidden'); }
+    else if (view==='change-pin') { a.classList.add('hidden'); s.classList.add('hidden'); c.classList.remove('hidden'); }
+    else { s.classList.remove('hidden'); a.classList.add('hidden'); c.classList.add('hidden'); }
+  }
+
+  function clearAllMessages_() {
+    const msgIds = ['ba-msg', 'si-msg', 'aa-msg', 'ra-msg', 'cm-msg', 'cs-msg', 'rs-msg', 'mc-msg', 'cp-msg', 'merch-msg'];
+    msgIds.forEach(id => { const el = $(id); if (el) el.textContent = ''; });
+    clearBanner();
+  }
+
+  // Inactivity countdown with robust scroll and gesture reset
+  let inactivityTimer = null;
+  let countdownInterval = null;
+  let __inactResetHandler = null;
+
+  function startInactivityTimer_() {
+    stopInactivityTimer_();
+    const timerEl = document.getElementById('session-timer');
+    let remaining = 60;
+
+    const updateUI = () => { if (timerEl) timerEl.textContent = 'Session: ' + remaining + ' s remaining'; };
+
+    const reset = () => {
+      clearTimeout(inactivityTimer);
+      clearInterval(countdownInterval);
+      remaining = 60;
+      updateUI();
+
+      countdownInterval = setInterval(() => {
+        remaining--;
+        updateUI();
+        if (remaining <= 0) clearInterval(countdownInterval);
+      }, 1000);
+
+      inactivityTimer = setTimeout(() => {
+        const sid = sessionStorage.getItem('asid') || '';
+        if (!sid) {
+          sessionStorage.removeItem('asid');
+          if (timerEl) timerEl.textContent = 'Session expired.';
+          show('signin');
+          return;
+        }
+        google.script.run.logoutASession(sid);
+        sessionStorage.removeItem('asid');
+        stopInactivityTimer_();
+        if (timerEl) timerEl.textContent = 'Session expired.';
+
+        $('si-username').value = '';
+        $('si-pin').value = '';
+        clearAllMessages_();
+        show('signin');
+      }, 60 * 1000);
+    };
+
+    // listen on both window and document for wheel and touchmove and pointermove too
+    __inactResetHandler = reset;
+    const evs = ['click','keydown','mousemove','pointermove','wheel','scroll','touchstart','touchmove'];
+    evs.forEach(ev => {
+      window.addEventListener(ev, __inactResetHandler, { passive: true });
+      document.addEventListener(ev, __inactResetHandler, { passive: true });
+    });
+    reset();
+  }
+
+  function stopInactivityTimer_() {
+    clearTimeout(inactivityTimer);
+    clearInterval(countdownInterval);
+    if (__inactResetHandler) {
+      const evs = ['click','keydown','mousemove','pointermove','wheel','scroll','touchstart','touchmove'];
+      evs.forEach(ev => {
+        window.removeEventListener(ev, __inactResetHandler);
+        document.removeEventListener(ev, __inactResetHandler);
+      });
+      __inactResetHandler = null;
+    }
+    const timerEl = document.getElementById('session-timer');
+    if (timerEl) timerEl.textContent = 'Session: —';
+  }
+
+  // toasts
+  function showToast(kind, message, ms=3500){
+    const cont = $('toast-container'); if (!cont) return;
+    const t = document.createElement('div');
+    t.className = 'toast ' + (kind||'success');
+    t.innerHTML = '<button class="close" aria-label="Close">×</button>' + String(message||'');
+    t.querySelector('.close').onclick = () => cont.removeChild(t);
+    cont.appendChild(t);
+    if (ms > 0) setTimeout(() => { if (t.parentNode) cont.removeChild(t); }, ms);
+  }
+
+  function setSectionMsg(id, kind, text){
+    const el = $(id); if (!el) return;
+    el.textContent = text || '';
+    if (!text) return;
+    el.style.color = kind === 'error' ? '#b00020' : kind === 'success' ? '#1b5e20' : '#333';
+    const r = el.getBoundingClientRect();
+    const fullyVisible = r.top >= 0 && r.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+    if (!fullyVisible) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  $('form-signin').onsubmit = (e) => {
+    e.preventDefault();
+    const u = $('si-username').value.trim();
+    const p = $('si-pin').value.trim();
+    if (!/^[a-z0-9._]{3,32}$/i.test(u)){ $('si-msg').textContent='Invalid username.'; return; }
+    if (!/^[0-9]{6}$/.test(p)){ $('si-msg').textContent='PIN must be 6 digits.'; return; }
+    $('si-msg').textContent='';
+    clearBanner();
+
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res && res.mustChangePin === true) {
+          $('cp-username').value = res.username;
+          $('si-pin').value = '';
+          $('si-msg').textContent = '';
+          $('cp-old-pin').value = '';
+          $('cp-new-pin').value = '';
+          $('cp-confirm-pin').value = '';
+          $('cp-msg').textContent = '';
+          show('change-pin');
+        } else if (res && res.sid) {
+          sessionStorage.setItem('asid', res.sid);
+          $('whoami').textContent = 'Signed in as ' + (res.username||'');
+          loadConfig_();
+          loadLogs_();
+          loadAdmins_();
+          loadVisibility_();
+          loadCampaigns_();
+          loadRequests_(); // <-- new   
+          loadCouponRequests_(); // coupons UI
+          loadLiveCoupons_()     
+          show('admin');
+          normalizeViewport();
+          startInactivityTimer_();
+          showBanner('success', 'Signed in.');
+        } else {
+          $('si-msg').textContent = (res && res.message) || 'Login failed. Unexpected response.';
+          checkProvisioning_();
+          showBanner('error', 'Sign in failed.');
+        }
+      })
+      .withFailureHandler(err => {
+        $('si-msg').textContent = (err && err.message) || 'Failed';
+        checkProvisioning_();
+        showBanner('error', $('si-msg').textContent);
+      })
+      .signinAdmin(u, p);
+  };
+
+  function checkProvisioning_(){
+    google.script.run
+      .withSuccessHandler(isProv => {
+        const fs = document.getElementById('first-admin');
+        if (fs) fs.classList.toggle('hidden', !!isProv);
+      })
+      .withFailureHandler(()=>{})
+      .isAdminProvisioned();
+  }
+
+  const fb = document.getElementById('form-bootstrap');
+  if (fb) fb.onsubmit = (e) => {
+    e.preventDefault();
+    const u = (document.getElementById('ba-username').value || '').trim().toLowerCase();
+    const p = (document.getElementById('ba-pin').value || '').trim();
+    const msg = document.getElementById('ba-msg');
+    if (msg) msg.textContent = '';
+    if (!/^[a-z0-9._]{3,32}$/.test(u)) { if (msg) msg.textContent = 'Invalid username.'; return; }
+    if (!/^[0-9]{6}$/.test(p)) { if (msg) msg.textContent = 'PIN must be 6 digits.'; return; }
+
+    google.script.run
+      .withSuccessHandler(res => {
+        if (msg) msg.textContent = 'Master admin created: ' + (res && res.username ? res.username : u);
+        checkProvisioning_();
+        showBanner('success', 'Master admin created.');
+      })
+      .withFailureHandler(err => {
+        const t = (err && err.message) || 'Failed';
+        if (msg) msg.textContent = t;
+        showBanner('error', t);
+      })
+      .adminBootstrapFirstAdmin(u, p);
+  };
+
+  $('btn-logout').onclick = () => {
+    const sid = sessionStorage.getItem('asid') || '';
+    if (sid) google.script.run.logoutASession(sid);
+    sessionStorage.removeItem('asid');
+    stopInactivityTimer_();
+    $('si-username').value = '';
+    $('si-pin').value = '';
+    clearAllMessages_();
+    show('signin');
+    showBanner('info', 'Logged out.');
+  };
+
+  function loadConfig_() {
+    google.script.run.withSuccessHandler(cfg => {
+      $('userdb').textContent = cfg.userDb ? (cfg.userDb.name + ' (' + cfg.userDb.id + ')') : 'not set';
+      $('merchantdb').textContent = cfg.merchantDb ? (cfg.merchantDb.name + ' (' + cfg.merchantDb.id + ')') : 'not set';
+      if (cfg.masterEmail) $('inp-master-email').value = cfg.masterEmail;
+      if (cfg.masterUsername) $('inp-master-username').value = cfg.masterUsername;
+      if (cfg.userDb) $('inp-userdb').value = cfg.userDb.id;
+      if (cfg.merchantDb) $('inp-merchantdb').value = cfg.merchantDb.id;
+      if (cfg.appVersion && $('cfg-version')) $('cfg-version').textContent = cfg.appVersion;
+    }).getConfig();
+  }
+
+  $('btn-set-userdb').onclick = () => {
+    const id = $('inp-userdb').value.trim();
+    google.script.run
+      .withSuccessHandler(() => { loadConfig_(); showToast('success','User DB saved.'); })
+      .withFailureHandler(err => showBanner('error', (err && err.message)||'Error'))
+      .setupSetUserDbId(id);
+  };
+  $('btn-set-merchantdb').onclick = () => {
+    const id = $('inp-merchantdb').value.trim();
+    google.script.run
+      .withSuccessHandler(() => { loadConfig_(); showBanner('success','Merchant DB saved.'); })
+      .withFailureHandler(err => showBanner('error', (err && err.message)||'Error'))
+      .setupSetMerchantDbId(id);
+  };
+  document.getElementById('btn-set-master-email').onclick = ()=>{
+    const email = document.getElementById('inp-master-email').value.trim();
+    google.script.run
+      .withSuccessHandler(()=>{ showBanner('success','Master email saved.'); })
+      .withFailureHandler(err=> showBanner('error', (err && err.message) || 'Error'))
+      .setupSetMasterAdminEmail(email);
+  };
+  document.getElementById('btn-set-master-username').onclick = ()=>{
+    const u = document.getElementById('inp-master-username').value.trim();
+    google.script.run
+      .withSuccessHandler(()=>{ showBanner('success','Master username saved.'); })
+      .withFailureHandler(err=> showBanner('error', (err && err.message) || 'Error'))
+      .setupSetMasterAdminUsername(u);
+  };
+
+  function renderAdmins_(rows){
+    const tb = $('tbl-admins').querySelector('tbody');
+    $('tbl-admins').querySelector('thead').innerHTML = `
+      <tr>
+        <th>Username</th>
+        <th>Created At</th>
+        <th>Active</th>
+        <th>Actions Master Only</th>
+      </tr>
+    `;
+    tb.innerHTML = '';
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.username}</td>
+        <td>${r.createdAt}</td>
+        <td>${r.active ? 'Yes' : 'No'}</td>
+        <td>
+          <button class="btn-admin-active" data-u="${r.username}" data-a="${r.active ? '0' : '1'}">${r.active ? 'Deactivate' : 'Activate'}</button>
+          <button class="btn-admin-del" data-u="${r.username}" style="background:#fee2e2; color:#991b1b;">Delete</button>
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    tb.querySelectorAll('.btn-admin-active').forEach(btn => {
+      btn.onclick = () => {
+        const sid = sessionStorage.getItem('asid')||'';
+        const u = btn.getAttribute('data-u');
+        const a = btn.getAttribute('data-a') === '1';
+        if (!confirm(`Are you sure you want to ${a ? 'Activate' : 'Deactivate'} admin: ${u}?`)) return;
+        google.script.run
+          .withSuccessHandler(() => { loadAdmins_(); showBanner('success', 'Admin updated.'); })
+          .withFailureHandler(err => showBanner('error', (err && err.message)||'Error'))
+          .adminSetAdminActive(sid, u, a);
+      };
+    });
+    tb.querySelectorAll('.btn-admin-del').forEach(btn => {
+      btn.onclick = () => {
+        const u = btn.getAttribute('data-u');
+        if (!confirm(`Are you SURE you want to DELETE admin: ${u}? This is permanent.`)) return;
+        const sid = sessionStorage.getItem('asid')||'';
+        google.script.run
+          .withSuccessHandler(() => { loadAdmins_(); showBanner('success', 'Admin deleted.'); })
+          .withFailureHandler(err => showBanner('error', (err && err.message)||'Error'))
+          .adminDeleteAdmin(sid, u);
+      };
+    });
+  }
+  function loadAdmins_(){
+    const sid = sessionStorage.getItem('asid')||'';
+    google.script.run.withSuccessHandler(renderAdmins_)
+      .withFailureHandler(err => { $('aa-msg').textContent = (err && err.message) || 'Error'; showBanner('error', $('aa-msg').textContent); })
+      .adminListAdmins(sid);
+  }
+  $('btn-refresh-admins').onclick = loadAdmins_;
+
+  $('btn-add-admin').onclick = () => {
+    const sid = sessionStorage.getItem('asid')||'';
+    const u = ($('aa-username').value || '').trim().toLowerCase();
+    const p = ($('aa-pin').value || '').trim();
+    $('aa-msg').textContent = '';
+    if (!/^[a-z0-9._]{3,32}$/.test(u)){ $('aa-msg').textContent = 'Invalid username.'; return; }
+    if (!/^[0-9]{6}$/.test(p)){ $('aa-msg').textContent = 'PIN must be 6 digits.'; return; }
+    google.script.run
+      .withSuccessHandler(res => {
+        $('aa-msg').textContent = 'Admin created: ' + res.username;
+        $('aa-username').value=''; $('aa-pin').value='';
+        loadAdmins_();
+        showBanner('success', 'Admin created.');
+      })
+      .withFailureHandler(err => { const t = (err && err.message) || 'Error'; $('aa-msg').textContent = t; showBanner('error', t); })
+      .adminAddAdmin(sid, u, p);
+  };
+
+  document.getElementById('btn-reset-admin-pin').onclick = ()=>{
+    const sid = sessionStorage.getItem('asid')||'';
+    const u = (document.getElementById('ra-username').value||'').trim();
+    const p = (document.getElementById('ra-pin').value||'').trim();
+    const msg = document.getElementById('ra-msg');
+    msg.textContent = '';
+    if (!u){ msg.textContent='Enter admin username.'; return; }
+    if (!/^[0-9]{6}$/.test(p)){ msg.textContent='Temp PIN must be 6 digits.'; return; }
+    google.script.run
+      .withSuccessHandler(res=>{ msg.textContent='Temp PIN set for admin '+res.username; document.getElementById('ra-username').value=''; document.getElementById('ra-pin').value=''; showBanner('success','Temp PIN set.'); })
+      .withFailureHandler(err=>{ const t=(err&&err.message)||'Error'; msg.textContent=t; showBanner('error', t); })
+      .adminResetSubAdminPin(sid, u, p);
+  };
+
+  document.getElementById('btn-master-selfreset').onclick = ()=>{
+    const sid = sessionStorage.getItem('asid')||'';
+    google.script.run
+      .withSuccessHandler(()=> showBanner('success','If you are the configured master email the link is sent.'))
+      .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Error'))
+      .adminMasterSendSelfResetLink(sid);
+  };
+
+  function renderRtx_(rows){
+    const tb = document.getElementById('tbl-rtx').querySelector('tbody');
+    tb.innerHTML = '';
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      const d = r.atMs ? new Date(Number(r.atMs)).toISOString().replace('T',' ').replace('Z','') : '—';
+      tr.innerHTML =
+        `<td>${d}</td><td>${r.memberId||''}</td><td>${r.merchantId||''}</td>`+
+        `<td>${r.type||''}</td><td class="num">${Number(r.points||0).toLocaleString()}</td><td>${r.staff||''}</td>`;
+      tb.appendChild(tr);
+    });
+  }
+  document.getElementById('btn-rtx-load').onclick = ()=>{
+    const sid = sessionStorage.getItem('asid')||'';
+    const u = document.getElementById('rtx-username').value.trim();
+    const n = Number(document.getElementById('rtx-limit').value||50);
+    google.script.run
+      .withSuccessHandler(renderRtx_)
+      .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Error'))
+      .adminRecentTxByStaff(sid, u, n);
+  };
+
+  function renderStaff_(rows){
+    const tb = document.getElementById('tbl-staff').querySelector('tbody');
+    tb.innerHTML = '';
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        `<td>${r.username}</td>`+
+        `<td>${r.merchantId}</td>`+
+        `<td>${r.role}</td>`+
+        `<td>${r.active? 'yes':'no'}</td>`+
+        `<td>${r.mustChange? 'yes':'no'}</td>`+
+        `<td>
+          <button class="btn-toggle" data-u="${r.username}" data-a="${r.active? '0':'1'}">${r.active? 'Deactivate':'Activate'}</button>
+          <button class="btn-promote" data-u="${r.username}" data-role="${r.role==='manager'?'staff':'manager'}">${r.role==='manager'?'Set staff':'Set manager'}</button>
+          <button class="btn-staff-del" data-u="${r.username}" style="background:#fee2e2; color:#991b1b;">Delete</button>
+        </td>`;
+      tb.appendChild(tr);
+    });
+
+    tb.querySelectorAll('.btn-toggle').forEach(btn=>{
+      btn.onclick = ()=>{
+        const sid = sessionStorage.getItem('asid')||'';
+        const u = btn.getAttribute('data-u');
+        const a = btn.getAttribute('data-a') === '1';
+        google.script.run
+          .withSuccessHandler(()=> { document.getElementById('btn-staff-load').click(); showBanner('success','Staff updated.'); })
+          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Error'))
+          .adminSetStaffActive(sid, u, a);
+      };
+    });
+    tb.querySelectorAll('.btn-promote').forEach(btn=>{
+      btn.onclick = ()=>{
+        const sid = sessionStorage.getItem('asid')||'';
+        const u = btn.getAttribute('data-u');
+        const role = btn.getAttribute('data-role');
+        google.script.run
+          .withSuccessHandler(()=> { document.getElementById('btn-staff-load').click(); showBanner('success','Role updated.'); })
+          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Error'))
+          .adminSetStaffRole(sid, u, role);
+      };
+    });
+
+    tb.querySelectorAll('.btn-staff-del').forEach(btn => {
+      btn.onclick = () => {
+        const u = btn.getAttribute('data-u');
+        if (!confirm(`Are you SURE you want to DELETE staff: ${u}? This is permanent.`)) return;
+        const sid = sessionStorage.getItem('asid')||'';
+        google.script.run
+          .withSuccessHandler(() => { document.getElementById('btn-staff-load').click(); showBanner('success','Staff deleted.'); })
+          .withFailureHandler(err => showBanner('error', (err && err.message)||'Error'))
+          .adminDeleteStaff(sid, u);
+      };
+    });
+  }
+  document.getElementById('btn-staff-load').onclick = ()=>{
+    const sid = sessionStorage.getItem('asid')||'';
+    google.script.run
+      .withSuccessHandler(renderStaff_)
+      .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Error'))
+      .adminListStaff(sid, {});
+  };
+
+  document.getElementById('btn-reset-staff-pin').onclick = ()=>{
+    const sid = sessionStorage.getItem('asid')||'';
+    const u = document.getElementById('rs-username').value.trim();
+    const p = document.getElementById('rs-pin').value.trim();
+    const msg = document.getElementById('rs-msg');
+    msg.textContent = '';
+    if (!u){ msg.textContent='Enter username.'; return; }
+    if (!/^[0-9]{6}$/.test(p)){ msg.textContent='Temp PIN must be 6 digits.'; return; }
+    google.script.run
+      .withSuccessHandler(res=>{ msg.textContent='Temp PIN set for '+res.username; document.getElementById('rs-username').value=''; document.getElementById('rs-pin').value=''; showBanner('success','Temp PIN set.'); })
+      .withFailureHandler(err=>{ const t=(err&&err.message)||'Error'; msg.textContent=t; showBanner('error', t); })
+      .adminResetStaffPin(sid, u, p);
+  };
+
+  $('btn-create-merchant').onclick = () => {
+    const sid = sessionStorage.getItem('asid')||'';
+    const name = $('cm-name').value.trim();
+    $('cm-msg').textContent = '';
+    if (!name){ $('cm-msg').textContent = 'Enter a merchant name.'; return; }
+    google.script.run
+      .withSuccessHandler(res => {
+        $('cm-msg').textContent = 'Created: ' + res.name + ' | ID: ' + res.merchantId + ' | Secret: ' + res.secret;
+        $('cm-name').value = '';
+        showBanner('success', 'Merchant created.');
+      })
+      .withFailureHandler(err => { const t=(err && err.message) || 'Error'; $('cm-msg').textContent = t; showBanner('error', t); })
+      .adminCreateMerchant(sid, name);
+  };
+
+  $('btn-create-staff').onclick = () => {
+    const sid = sessionStorage.getItem('asid')||'';
+    const merchantId = $('cs-merchant').value.trim().toUpperCase();
+    const username   = $('cs-username').value.trim();
+    const pin        = $('cs-pin').value.trim();
+    const role       = $('cs-role').value;
+    $('cs-msg').textContent = '';
+    if (!merchantId){ $('cs-msg').textContent = 'Enter Merchant ID.'; return; }
+    if (!/^[a-z0-9._]{3,32}$/i.test(username)){ $('cs-msg').textContent = 'Invalid username.'; return; }
+    if (!/^[0-9]{6}$/.test(pin)){ $('cs-msg').textContent = 'PIN must be 6 digits.'; return; }
+    google.script.run
+      .withSuccessHandler(res => {
+        $('cs-msg').textContent = 'Staff created: ' + res.username + ' (' + res.role + ') for ' + res.merchantId;
+        $('cs-username').value = ''; $('cs-pin').value = '';
+        showBanner('success', 'Staff created.');
+      })
+      .withFailureHandler(err => { const t=(err && err.message) || 'Error'; $('cs-msg').textContent = t; showBanner('error', t); })
+      .adminCreateStaff(sid, merchantId, username, pin, role);
+  };
+
+  function renderMerchants_(rows) {
+    const tb = $('tbl-merchants').querySelector('tbody');
+    tb.innerHTML = '';
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.merchantId}</td>
+        <td>${r.name}</td>
+        <td>${r.active ? 'Yes' : 'No'}</td>
+        <td>
+          <button class="btn-merch-active" data-id="${r.merchantId}" data-a="${r.active ? '0' : '1'}">${r.active ? 'Deactivate' : 'Activate'}</button>
+          <button class="btn-merch-del" data-id="${r.merchantId}" style="background:#fee2e2; color:#991b1b;">Delete</button>
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    tb.querySelectorAll('.btn-merch-active').forEach(btn => {
+      btn.onclick = () => {
+        const sid = sessionStorage.getItem('asid')||'';
+        const id = btn.getAttribute('data-id');
+        const a = btn.getAttribute('data-a') === '1';
+        if (!confirm(`Are you sure you want to ${a ? 'Activate' : 'Deactivate'} merchant: ${id}?`)) return;
+        google.script.run
+          .withSuccessHandler(() => { $('btn-merch-load').click(); showBanner('success', 'Merchant updated.'); })
+          .withFailureHandler(err => showBanner('error', (err && err.message)||'Error'))
+          .adminSetMerchantActive(sid, id, a);
+      };
+    });
+
+    tb.querySelectorAll('.btn-merch-del').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.getAttribute('data-id');
+        if (!confirm(`Are you SURE you want to DELETE merchant: ${id}? This is permanent and will orphan transaction data. Deactivating is safer.`)) return;
+        const sid = sessionStorage.getItem('asid')||'';
+        google.script.run
+          .withSuccessHandler(() => { $('btn-merch-load').click(); showBanner('success', 'Merchant deleted.'); })
+          .withFailureHandler(err => showBanner('error', (err && err.message)||'Error'))
+          .adminDeleteMerchant(sid, id);
+      };
+    });
+  }
+
+  $('btn-merch-load').onclick = () => {
+    const sid = sessionStorage.getItem('asid')||'';
+    $('merch-msg').textContent = 'Loading...';
+    google.script.run
+      .withSuccessHandler(res => {
+        renderMerchants_(res);
+        $('merch-msg').textContent = `${res.length} merchants loaded.`;
+      })
+      .withFailureHandler(err => { const t=(err && err.message) || 'Error'; $('merch-msg').textContent = t; showBanner('error', t); })
+      .adminListMerchants(sid);
+  };
+
+  // ───────────────────── Campaigns / Multipliers UI ─────────────────────
+  let __campaignsCache = [];
+
+  function populateCampaignDropdown_(rows){
+    __campaignsCache = rows || [];
+    const sel = document.getElementById('cpn-select');
+    if (!sel) return;
+    const prev = sel.value || '';
+    sel.innerHTML = '<option value="">—</option>';
+    __campaignsCache.forEach(r=>{
+      const opt = document.createElement('option');
+      opt.value = r.campaignId;
+      opt.textContent = `${r.title} (${r.campaignId})`;
+      sel.appendChild(opt);
+    });
+    if (prev) sel.value = prev;
+  }
+
+  function _num(n){ return Number(n||0).toLocaleString(); } // already defined later; keep for local use safely
+
+  function showCampaignDetail_(row){
+    const box = document.getElementById('cpn-detail');
+    if (!box) return;
+
+    if (!row) {
+      box.classList.add('hidden');
+      return;
+    }
+    box.classList.remove('hidden');
+
+    // Fill fields
+    document.getElementById('cd-id').textContent = row.campaignId || '—';
+    document.getElementById('cd-title').textContent = row.title || '—';
+    document.getElementById('cd-merchant').textContent = row.merchantId || '—';
+    document.getElementById('cd-mult').textContent = _num(row.multiplier);
+    document.getElementById('cd-start').textContent = row.startIso || '—';
+    document.getElementById('cd-end').textContent = row.endIso || '—';
+    document.getElementById('cd-min').textContent = _num(row.minSpend);
+    document.getElementById('cd-max').textContent = _num(row.maxRedemptions);
+    document.getElementById('cd-maxpc').textContent = _num(row.maxPerCustomer);
+    document.getElementById('cd-bud').textContent = _num(row.budgetCap);
+    document.getElementById('cd-bill').textContent = row.billingModel || '—';
+    document.getElementById('cd-cpr').textContent = _num(row.costPerRedemption);
+    document.getElementById('cd-act').textContent = row.active ? 'Yes' : 'No';
+
+    // Image
+    const img = document.getElementById('cd-img');
+    const noimg = document.getElementById('cd-noimg');
+    if (row.imageUrl) {
+      img.src = row.imageUrl;
+      img.style.display = 'block';
+      if (noimg) noimg.style.display = 'none';
+    } else {
+      img.src = '';
+      img.style.display = 'none';
+      if (noimg) noimg.style.display = 'block';
+    }
+
+    // clear msg & file
+    document.getElementById('cd-msg').textContent = '';
+    const f = document.getElementById('cd-file');
+    if (f) f.value = '';
+  }
+
+  function getSelectedCampaign_(){
+    const sel = document.getElementById('cpn-select');
+    const id = sel ? sel.value : '';
+    if (!id) return null;
+    return (__campaignsCache || []).find(r => r.campaignId === id) || null;
+  }
+
+  function isCampaignLive(row){
+    if (!row) return false;
+    const active = String(row.active).toLowerCase() !== 'false';
+    if (!active) return false;
+    const now = Date.now();
+    const s = row.startIso ? Date.parse(row.startIso) : 0;
+    const e = row.endIso   ? Date.parse(row.endIso)   : 0;
+    const inWindow = (!s || now>=s) && (!e || now<=e);
+    return inWindow;
+  }
+
+  function renderCampaigns_(rows){
+    const tbl = document.getElementById('tbl-campaigns');
+    const tb = tbl.querySelector('tbody');
+    tb.innerHTML = '';
+
+    (rows||[]).forEach(r=>{
+      const imgCell = r.imageUrl
+        ? `<img src="${r.imageUrl}" alt="" style="max-width:80px; max-height:60px; display:block;">`
+        : '—';
+
+      const tr = document.createElement('tr');
+
+      // compute 'live' BEFORE writing HTML
+      const live = isCampaignLive(r);
+      const secondLabel = live ? 'Deactivate' : 'Delete';
+      const secondStyle = live ? '' : 'background:#fee2e2; color:#991b1b;';
+
+      tr.innerHTML = `
+        <td>${r.campaignId}</td>
+        <td>${r.merchantId}</td>
+        <td>${r.title}</td>
+        <td class="num">${Number(r.multiplier||0).toLocaleString()}</td>
+        <td>${r.startIso||''}</td>
+        <td>${r.endIso||''}</td>
+        <td class="num">${Number(r.minSpend||0).toLocaleString()}</td>
+        <td class="num">${Number(r.maxRedemptions||0).toLocaleString()}</td>
+        <td class="num">${Number(r.maxPerCustomer||0).toLocaleString()}</td>
+        <td class="num">${Number(r.budgetCap||0).toLocaleString()}</td>
+        <td>${r.billingModel||'per_redemption'}</td>
+        <td class="num">${Number(r.costPerRedemption||0).toLocaleString()}</td>
+        <td>${r.active ? 'Yes' : 'No'}</td>
+        <td>${imgCell}</td>
+        <td>
+          <button class="btn-cpn-activate" data-id="${r.campaignId}" ${live ? 'disabled' : ''}>Activate</button>
+          <button class="btn-cpn-deactdel" data-id="${r.campaignId}" data-live="${live?'1':'0'}" style="${secondStyle}">${secondLabel}</button>
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    // wire buttons
+    tb.querySelectorAll('.btn-cpn-activate').forEach(btn=>{
+      btn.onclick = ()=>{
+        const sid = sessionStorage.getItem('asid')||'';
+        const id  = btn.getAttribute('data-id');
+        google.script.run
+          .withSuccessHandler(()=>{ document.getElementById('btn-cpn-load').click(); showBanner('success','Campaign activated.'); })
+          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Activate failed'))
+          .adminSetCampaignActive(sid, id, true);
+      };
+    });
+
+    tb.querySelectorAll('.btn-cpn-deactdel').forEach(btn=>{
+      btn.onclick = ()=>{
+        const sid = sessionStorage.getItem('asid')||'';
+        const id  = btn.getAttribute('data-id');
+        const live = btn.getAttribute('data-live') === '1';
+        const msg = live
+          ? `Deactivate live campaign ${id}?`
+          : `Delete campaign ${id}? This is permanent.`;
+        if (!confirm(msg)) return;
+
+        google.script.run
+          .withSuccessHandler(()=>{
+            document.getElementById('btn-cpn-load').click();
+            showBanner('success', live ? 'Campaign deactivated.' : 'Campaign deleted.');
+          })
+          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Action failed'))
+          .adminDeactivateOrDeleteCampaign(sid, id);
+      };
+    });
+
+    applyResponsiveLabels_(tbl);
+    populateCampaignDropdown_(rows);
+  }
+
+  function renderLiveCoupons_(rows) {
+    const tb = document.querySelector('#tbl-live-coupons tbody');
+    if (!tb) return;
+    tb.innerHTML = '';
+    (rows || []).forEach(r => {
+      const tr = document.createElement('tr');
+      const window = (r.startIso || '—') + ' → ' + (r.endIso || '—');
+      tr.innerHTML = `
+        <td>${r.code}</td>
+        <td>${r.merchantId}</td>
+        <td>${r.mode || '(Both)'}</td>
+        <td>${r.type}</td>
+        <td class="num">${Number(r.value || 0).toLocaleString()}</td>
+        <td class="num">${Number(r.usedCount || 0).toLocaleString()}</td>
+        <td>${r.active ? 'Yes' : 'No'}</td>
+        <td>${window}</td>
+        <td>
+          <button class="btn-live-cpn-toggle" data-c="${r.code}" data-m="${r.merchantId}" data-a="${r.active ? '0' : '1'}">
+            ${r.active ? 'Deactivate' : 'Activate'}
+          </button>
+          <button class="btn-live-cpn-del" data-c="${r.code}" data-m="${r.merchantId}" style="background:#fee2e2; color:#991b1b;">Delete</button>
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+    // Wire toggle button
+    tb.querySelectorAll('.btn-live-cpn-toggle').forEach(btn => {
+      btn.onclick = () => {
+        const sid = sessionStorage.getItem('asid') || '';
+        const code = btn.getAttribute('data-c');
+        const mid = btn.getAttribute('data-m');
+        const active = btn.getAttribute('data-a') === '1';
+        if (!confirm(`Are you sure you want to ${active ? 'Activate' : 'Deactivate'} coupon ${code} for ${mid}?`)) return;
+        google.script.run
+          .withSuccessHandler(() => { loadLiveCoupons_(); showBanner('success', 'Coupon status updated.'); })
+          .withFailureHandler(err => showBanner('error', (err && err.message) || 'Error'))
+          .adminSetCouponActiveStatus(sid, code, mid, active);
+      };
+    });
+    // Wire delete button
+    tb.querySelectorAll('.btn-live-cpn-del').forEach(btn => {
+      btn.onclick = () => {
+        const sid = sessionStorage.getItem('asid') || '';
+        const code = btn.getAttribute('data-c');
+        const mid = btn.getAttribute('data-m');
+        if (!confirm(`Are you SURE you want to DELETE coupon ${code} for ${mid}? This is permanent.`)) return;
+        google.script.run
+          .withSuccessHandler(() => { loadLiveCoupons_(); showBanner('success', 'Coupon deleted.'); })
+          .withFailureHandler(err => showBanner('error', (err && err.message) || 'Error'))
+          .adminDeleteCoupon(sid, code, mid);
+      };
+    });
+    applyResponsiveLabels_(document.getElementById('tbl-live-coupons'));
+  }
+
+  function loadLiveCoupons_() {
+    const sid = sessionStorage.getItem('asid') || '';
+    google.script.run
+      .withSuccessHandler(renderLiveCoupons_)
+      .withFailureHandler(err => showBanner('error', (err && err.message) || 'Error loading live coupons'))
+      .adminListLiveCoupons(sid);
+  }
+
+  document.getElementById('btn-live-coupons-load').onclick = loadLiveCoupons_;
+
+  // Wire the Direct Creation Form
+  document.getElementById('form-create-coupon').onsubmit = (e) => {
+    e.preventDefault();
+    const sid = sessionStorage.getItem('asid') || '';
+    const payload = {
+      code: document.getElementById('nc-cpn-code').value.trim(),
+      merchantId: document.getElementById('nc-cpn-merchant').value.trim(),
+      mode: document.getElementById('nc-cpn-mode').value,
+      type: document.getElementById('nc-cpn-type').value,
+      value: document.getElementById('nc-cpn-value').value,
+      maxUses: document.getElementById('nc-cpn-max').value,
+      perMemberLimit: document.getElementById('nc-cpn-pm').value,
+      startIso: document.getElementById('nc-cpn-start').value,
+      endIso: document.getElementById('nc-cpn-end').value,
+      notes: document.getElementById('nc-cpn-notes').value,
+    };
+    const msg = document.getElementById('create-cpn-msg');
+    msg.textContent = '';
+
+    google.script.run
+      .withSuccessHandler(res => {
+        msg.textContent = `Coupon ${res.code} ${res.upserted.updated ? 'updated' : 'created'}.`;
+        document.getElementById('form-create-coupon').reset();
+        loadLiveCoupons_();
+        showBanner('success', msg.textContent);
+      })
+      .withFailureHandler(err => {
+        msg.textContent = (err && err.message) || 'Error creating/updating coupon.';
+        showBanner('error', msg.textContent);
+      })
+      .adminCreateCoupon(sid, payload);
+  };
+  function loadCampaigns_(){
+    const sid = sessionStorage.getItem('asid')||'';
+    const opts = {
+      q: (document.getElementById('cpn-q').value||'').trim(),
+      merchantId: (document.getElementById('cpn-merchant-filter').value||'').trim().toUpperCase()
+    };
+    const sel = document.getElementById('cpn-select');
+    const prevId = sel ? sel.value : '';
+
+    google.script.run
+      .withSuccessHandler(rows => {
+        renderCampaigns_(rows);
+        if (prevId) {
+          const match = (rows||[]).find(r => r.campaignId === prevId) || null;
+          showCampaignDetail_(match);
+          if (sel) sel.value = prevId;
+        }
+      })
+      .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Error loading campaigns'))
+      .adminListCampaigns(sid, opts);
+  }
+  document.getElementById('btn-cpn-load').onclick = loadCampaigns_;
+
+  const __btnCpnRefreshDd = document.getElementById('btn-cpn-refresh-dd');
+  if (__btnCpnRefreshDd) __btnCpnRefreshDd.onclick = loadCampaigns_;
+
+  const __selCpn = document.getElementById('cpn-select');
+  if (__selCpn) {
+    __selCpn.onchange = () => {
+      const row = getSelectedCampaign_();
+      showCampaignDetail_(row);
+    };
+  }
+
+  const __btnUploadImg = document.getElementById('btn-upload-img');
+  if (__btnUploadImg) {
+    __btnUploadImg.onclick = () => {
+      const row = getSelectedCampaign_();
+      const msg = document.getElementById('cd-msg');
+      msg.textContent = '';
+      if (!row) { msg.textContent = 'Select a campaign first.'; return; }
+
+      const inp = document.getElementById('cd-file');
+      if (!inp || !inp.files || !inp.files[0]) { msg.textContent = 'Choose an image file.'; return; }
+
+      const file = inp.files[0];
+      if (!/^image\//i.test(file.type)) { msg.textContent = 'File must be an image.'; return; }
+
+      // Read file as DataURL (base64) and send to server
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result||'');
+        if (!dataUrl.startsWith('data:image/')) { msg.textContent = 'Could not read image.'; return; }
+        msg.textContent = 'Uploading...';
+
+        const sid = sessionStorage.getItem('asid')||'';
+        google.script.run
+          .withSuccessHandler(res => {
+            msg.textContent = 'Uploaded.';
+            // refresh list and detail
+            document.getElementById('btn-cpn-load').click();
+            // also optimistic update
+            const img = document.getElementById('cd-img');
+            const noimg = document.getElementById('cd-noimg');
+            if (img) { img.src = res.imageUrl; img.style.display = 'block'; }
+            if (noimg) noimg.style.display = 'none';
+            showBanner('success', 'Campaign image saved.');
+          })
+          .withFailureHandler(err => {
+            msg.textContent = (err && err.message) || 'Upload failed.';
+            showBanner('error', msg.textContent);
+          })
+          .adminUploadCampaignImage(sid, row.campaignId, file.name || 'campaign', dataUrl);
+      };
+      reader.onerror = () => { msg.textContent = 'Failed to read image file.'; };
+      reader.readAsDataURL(file);
+    };
+  }
+
+  document.getElementById('btn-create-cpn').onclick = ()=>{
+    const sid = sessionStorage.getItem('asid')||'';
+    const merchantId = (document.getElementById('nc-merchant').value||'').trim().toUpperCase();
+    const title      = (document.getElementById('nc-title').value||'').trim();
+    const multiplier = Number(document.getElementById('nc-mult').value||2);
+    const startIso   = (document.getElementById('nc-start').value||'').trim();
+    const endIso     = (document.getElementById('nc-end').value||'').trim();
+    const minSpend   = Number(document.getElementById('nc-min').value||0);
+    const maxRed     = Number(document.getElementById('nc-max').value||0);
+    const maxPerCust    = Number(document.getElementById('nc-max-percust').value||0);
+    const budgetCap  = Number(document.getElementById('nc-budget').value||0);
+    const billing    = (document.getElementById('nc-billing').value||'per_redemption');
+    const cpr        = Number(document.getElementById('nc-cpr').value||0);
+    const activeSel  = (document.getElementById('nc-active').value||'yes');
+    const active     = activeSel === 'yes';
+
+    const msg = document.getElementById('cpn-msg'); msg.textContent = '';
+
+    if (!merchantId){ msg.textContent = 'Enter Merchant ID.'; return; }
+    if (!title){ msg.textContent = 'Enter Title.'; return; }
+    if (!startIso || !endIso){ msg.textContent = 'Enter start and end dates (YYYY-MM-DD).'; return; }
+    if (isNaN(Date.parse(startIso)) || isNaN(Date.parse(endIso))){ msg.textContent='Invalid dates.'; return; }
+    if (multiplier < 1){ msg.textContent='Multiplier must be >= 1.'; return; }
+
+    const payload = {
+      merchantId, title, multiplier, startIso, endIso,
+      minSpend, maxRedemptions: maxRed, maxPerCustomer: maxPerCust, budgetCap,
+      billingModel: billing, costPerRedemption: cpr, active
+    };
+
+    google.script.run
+      .withSuccessHandler(res=>{
+        msg.textContent = 'Created campaign: ' + (res && res.campaignId ? res.campaignId : '(unknown)');
+
+        // === Reset all fields to defaults ===
+        const $ = (id)=>document.getElementById(id);
+        $('nc-merchant').value = '';
+        $('nc-title').value = '';
+        $('nc-mult').value = '2';
+        $('nc-start').value = '';
+        $('nc-end').value = '';
+        $('nc-min').value = '0';
+        $('nc-max').value = '0';
+        $('nc-budget').value = '0';
+        $('nc-billing').value = 'per_redemption';
+        $('nc-cpr').value = '0';
+        $('nc-active').value = 'yes';
+        $('nc-max-percust').value = '0';
+        // ====================================
+
+        document.getElementById('btn-cpn-load').click();
+        showBanner('success','Campaign created.');
+      })
+      .withFailureHandler(err=>{
+        msg.textContent = (err && err.message) || 'Error creating campaign.';
+        showBanner('error', msg.textContent);
+      })
+      .adminCreateCampaign(sid, payload);
+  };
+
+  function renderRequests_(rows){
+    const tbl = document.getElementById('tbl-requests');
+    const tb = tbl.querySelector('tbody');
+    tb.innerHTML = '';
+
+    (rows||[]).forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.requestId}</td>
+        <td>${r.merchantId}</td>
+        <td>${r.requestType}</td>
+        <td>${r.title||''}</td>
+        <td class="num">${Number(r.multiplier||0).toLocaleString()}</td>
+        <td>${r.startIso||''}</td>
+        <td>${r.endIso||''}</td>
+        <td class="num">${Number(r.minSpend||0).toLocaleString()}</td>
+        <td class="num">${Number(r.maxRedemptions||0).toLocaleString()}</td>
+        <td class="num">${Number(r.maxPerCustomer||0).toLocaleString()}</td>
+        <td class="num">${Number(r.budgetCap||0).toLocaleString()}</td>
+        <td>${r.billingModel||''}</td>
+        <td class="num">${Number(r.costPerRedemption||0).toLocaleString()}</td>
+        <td>${r.status}</td>
+        <td>${r.createdBy||''}</td>
+        <td>${r.createdAt||''}</td>
+        <td>
+          ${r.status==='pending'
+            ? `<button class="btn-rq-approve" data-id="${r.requestId}">Approve</button>
+               <button class="btn-rq-reject" data-id="${r.requestId}" style="background:#fee2e2; color:#991b1b;">Reject</button>`
+            : '—'}
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    // wire
+    tb.querySelectorAll('.btn-rq-approve').forEach(btn=>{
+      btn.onclick = ()=>{
+        const sid = sessionStorage.getItem('asid')||'';
+        const id = btn.getAttribute('data-id');
+        if (!confirm(`Approve request ${id}?`)) return;
+        google.script.run
+          .withSuccessHandler(res=>{
+            loadRequests_();
+            loadCampaigns_(); // refresh live campaigns too (new/edit/deactivate/delete)
+            const lcid = res && res.linkedCampaignId ? (' Linked: ' + res.linkedCampaignId) : '';
+            showBanner('success','Request approved.' + lcid);
+          })
+          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Approve failed'))
+          .adminApproveCampaignRequest(sid, id);
+      };
+    });
+    tb.querySelectorAll('.btn-rq-reject').forEach(btn=>{
+      btn.onclick = ()=>{
+        const sid = sessionStorage.getItem('asid')||'';
+        const id = btn.getAttribute('data-id');
+        const reason = prompt('Optional rejection reason (sent to merchant later):','');
+        google.script.run
+          .withSuccessHandler(()=>{ loadRequests_(); showBanner('success','Request rejected.'); })
+          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Error'))
+          .adminRejectCampaignRequest(sid, id, reason||'');
+      };
+    });
+
+    applyResponsiveLabels_(tbl);
+    document.getElementById('rq-msg').textContent = (rows||[]).length + ' requests';
+  }
+
+  function loadRequests_(){
+    const sid = sessionStorage.getItem('asid')||'';
+    const opts = {
+      status: (document.getElementById('rq-status')?.value||'').trim(),
+      requestType: (document.getElementById('rq-type')?.value||'').trim(),
+      merchantId: (document.getElementById('rq-merchant')?.value||'').trim().toUpperCase(),
+      q: (document.getElementById('rq-q')?.value||'').trim()
+    };
+    document.getElementById('rq-msg').textContent = 'Loading...';
+    google.script.run
+      .withSuccessHandler(rows => { renderRequests_(rows); })
+      .withFailureHandler(err => { const t=(err&&err.message)||'Error'; document.getElementById('rq-msg').textContent = t; showBanner('error', t); })
+      .adminListCampaignRequests(sid, opts);
+  }
+
+  const __btnRqLoad = document.getElementById('btn-rq-load');
+  if (__btnRqLoad) __btnRqLoad.onclick = loadRequests_;
+
+  // ===== COUPON REQUESTS =====
+  function _encJson(o){ return encodeURIComponent(JSON.stringify(o||{})); }
+  function _decJson(s){ try { return JSON.parse(decodeURIComponent(String(s||''))); } catch(_){ return {}; } }
+
+  function renderCouponRequests_(rows){
+    const tb = document.getElementById('cpnReqTableBody');
+    const tbl = document.getElementById('tbl-cpnreq');
+    const msg = document.getElementById('cpn-req-msg');
+    tb.innerHTML = '';
+    (rows||[]).forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.requestId}</td>
+        <td>${r.merchantId}</td>
+        <td>${r.code}</td>
+        <td>${r.mode||''}</td>
+        <td>${r.type||''}</td>
+        <td class="num">${Number(r.value||0).toLocaleString()}</td>
+        <td class="num">${Number(r.maxUses||0).toLocaleString()}</td>
+        <td class="num">${Number(r.perMemberLimit||0).toLocaleString()}</td>
+        <td>${r.startIso||'—'}</td>
+        <td>${r.endIso||'—'}</td>
+        <td>${r.status}</td>
+        <td>${r.createdBy||''}</td>
+        <td>${r.createdAt||''}</td>
+        <td>
+          ${r.status==='pending' ? `
+            <button class="btn-cpn-approve" data-id="${r.requestId}">Approve</button>
+            <button class="btn-cpn-approve-ovr" data-id="${r.requestId}" data-row="${_encJson(r)}">Approve + Edit</button>
+            <button class="btn-cpn-reject" data-id="${r.requestId}" style="background:#fee2e2; color:#991b1b;">Reject</button>
+          ` : '—'}
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    tb.querySelectorAll('.btn-cpn-approve').forEach(btn=>{
+      btn.onclick = ()=>{
+        const sid = sessionStorage.getItem('asid')||'';
+        const id = btn.getAttribute('data-id');
+        if (!confirm(`Approve coupon request ${id}?`)) return;
+        google.script.run
+          .withSuccessHandler(res=>{ showBanner('success', `Coupon approved: ${res.code}`); loadCouponRequests_(); })
+          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Approve failed'))
+          .adminApproveCouponRequest(sid, id, null);
+      };
+    });
+
+    tb.querySelectorAll('.btn-cpn-approve-ovr').forEach(btn=>{
+      btn.onclick = ()=>{
+        const sid = sessionStorage.getItem('asid')||'';
+        const id = btn.getAttribute('data-id');
+        const row = _decJson(btn.getAttribute('data-row'));
+        // minimal prompt-based override
+        const ovr = {};
+        const ask = (label, def) => prompt(label, def==null?'':String(def));
+        const mode = ask('Mode (COLLECT/REDEEM or blank)', row.mode||'');
+        if (mode) ovr.mode = mode.toUpperCase();
+        const type = ask('Type (BONUS/DISCOUNT)', row.type||'BONUS');
+        if (type) ovr.type = type.toUpperCase();
+        const value = Number(ask('Value (>0)', row.value||0)); if (!isNaN(value)&&value>0) ovr.value=value;
+        const maxUses = Number(ask('Max Uses (0=unlimited)', row.maxUses||0)); if (!isNaN(maxUses)) ovr.maxUses=maxUses;
+        const perMember = Number(ask('Per-member limit (0=unlimited)', row.perMemberLimit||0)); if (!isNaN(perMember)) ovr.perMemberLimit=perMember;
+        const startIso = ask('Start ISO (optional)', row.startIso||''); if (startIso) ovr.startIso=startIso;
+        const endIso = ask('End ISO (optional)', row.endIso||''); if (endIso) ovr.endIso=endIso;
+        const notes = ask('Decision notes (optional)', 'Approved w/ override'); if (notes) ovr.decisionNotes=notes;
+
+        google.script.run
+          .withSuccessHandler(res=>{ showBanner('success', `Coupon approved (overridden): ${res.code}`); loadCouponRequests_(); })
+          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Approve+Edit failed'))
+          .adminApproveCouponRequest(sid, id, ovr);
+      };
+    });
+
+    tb.querySelectorAll('.btn-cpn-reject').forEach(btn=>{
+      btn.onclick = ()=>{
+        const sid = sessionStorage.getItem('asid')||'';
+        const id = btn.getAttribute('data-id');
+        const reason = prompt('Reason (optional):','');
+        google.script.run
+          .withSuccessHandler(()=>{ showBanner('success','Request rejected'); loadCouponRequests_(); })
+          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Reject failed'))
+          .adminRejectCouponRequest(sid, id, reason||'');
+      };
+    });
+
+    applyResponsiveLabels_(tbl);
+    if (msg) msg.textContent = `${(rows||[]).length} requests`;
+  }
+
+  function loadCouponRequests_(){
+    const sid = sessionStorage.getItem('asid')||'';
+    const filters = {
+      status: (document.getElementById('cpnReqStatus')?.value||'').trim().toLowerCase(),
+      merchantId: (document.getElementById('cpnReqMerchant')?.value||'').trim().toUpperCase(),
+      q: (document.getElementById('cpnReqQuery')?.value||'').trim().toLowerCase()
+    };
+    const msg = document.getElementById('cpn-req-msg'); if (msg) msg.textContent = 'Loading...';
+    google.script.run
+      .withSuccessHandler(rows => renderCouponRequests_(rows || []))
+      .withFailureHandler(err => { const t=(err&&err.message)||'Error'; if (msg) msg.textContent=t; showBanner('error', t); })
+      .adminListCouponRequests(sid, filters);
+  }
+
+  const __btnCpnReqLoad = document.getElementById('btn-cpnreq-load');
+  if (__btnCpnReqLoad) __btnCpnReqLoad.onclick = loadCouponRequests_;
+
+  $('btn-purge-user-sessions').onclick = () => {
+    const sid = sessionStorage.getItem('asid')||'';
+    google.script.run
+      .withSuccessHandler(res => showBanner('success', 'User sessions purged: ' + ((res&&res.removed)||0)))
+      .withFailureHandler(err => showBanner('error', (err&&err.message)||'Error'))
+      .adminPurgeUserSessions(sid, 120);
+  };
+  $('btn-purge-merchant-sessions').onclick = () => {
+    const sid = sessionStorage.getItem('asid')||'';
+    google.script.run
+      .withSuccessHandler(res => showBanner('success', 'Merchant sessions purged: ' + ((res&&res.removed)||0)))
+      .withFailureHandler(err => showBanner('error', (err&&err.message)||'Error'))
+      .adminPurgeMerchantSessions(sid, 120);
+  };
+  $('btn-purge-linktokens').onclick = () => {
+    const sid = sessionStorage.getItem('asid')||'';
+    google.script.run
+      .withSuccessHandler(res => showBanner('success', 'Link tokens purged: ' + ((res&&res.removed)||0)))
+      .withFailureHandler(err => showBanner('error', (err&&err.message)||'Error'))
+      .adminPurgeLinkTokens(sid, 60);
+  };
+  $('btn-purge-resettokens').onclick = () => {
+    const sid = sessionStorage.getItem('asid')||'';
+    google.script.run
+      .withSuccessHandler(res => showBanner('success', 'Reset tokens purged: ' + ((res&&res.removed)||0)))
+      .withFailureHandler(err => showBanner('error', (err&&err.message)||'Error'))
+      .adminPurgeResetTokens(sid, 60);
+  };
+
+  function downloadCsv_(name, csv) {
+    const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = name||'data.csv';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+    showBanner('success', name + ' downloaded.');
+  }
+  $('btn-export-balances').onclick = () => {
+    const sid = sessionStorage.getItem('asid')||'';
+    google.script.run
+      .withSuccessHandler(res => { if (res && res.csv) downloadCsv_(res.filename, res.csv); })
+      .withFailureHandler(err => showBanner('error', (err&&err.message)||'Error'))
+      .exportBalancesCsv(sid);
+  };
+  $('btn-export-tx').onclick = () => {
+    const sid = sessionStorage.getItem('asid')||'';
+    google.script.run
+      .withSuccessHandler(res => { if (res && res.csv) downloadCsv_(res.filename, res.csv); })
+      .withFailureHandler(err => showBanner('error', (err&&err.message)||'Error'))
+      .exportTransactionsCsv(sid);
+  };
+
+  // safe guards for optional header protection buttons
+  const _btnProtectWarn = document.getElementById('btn-protect-warning');
+  if (_btnProtectWarn) {
+    _btnProtectWarn.onclick = () => {
+      const sid = sessionStorage.getItem('asid') || '';
+      google.script.run
+        .withSuccessHandler(()=>showBanner('success','Headers protected in warning mode.'))
+        .withFailureHandler(err => showBanner('error', (err&&err.message)||'Error'))
+        .adminProtectHeaders(sid, true);
+    };
+  }
+  const _btnProtectStrict = document.getElementById('btn-protect-strict');
+  if (_btnProtectStrict) {
+    _btnProtectStrict.onclick = () => {
+      const sid = sessionStorage.getItem('asid') || '';
+      google.script.run
+        .withSuccessHandler(()=>showBanner('success','Headers protected in strict mode.'))
+        .withFailureHandler(err => showBanner('error', (err&&err.message)||'Error'))
+        .adminProtectHeaders(sid, false);
+    };
+  }
+
+  function _num(n){ return Number(n||0).toLocaleString(); }
+  function _pct(x){ return (Number(x||0)*100).toFixed(1) + '%'; }
+  function _short(s){ return s ? String(s).replace('T',' ').replace('Z','') : '—'; }
+
+  function renderVis_(p){
+    if (!p) return;
+
+    const m = p.must || {};
+    const U = m.users || {}, M = m.merchants || {}, S = m.sessions || {}, T = m.tx || {}, B = m.balances || {};
+    document.getElementById('kpi-users-total').textContent = _num(U.total);
+    document.getElementById('kpi-users-new-today').textContent = _num(U.newToday);
+    document.getElementById('kpi-users-new-7d').textContent = _num(U.new7d);
+
+    document.getElementById('kpi-merch-total').textContent = _num(M.total);
+    document.getElementById('kpi-merch-active').textContent = _num(M.active);
+    document.getElementById('kpi-merch-inactive').textContent = _num(M.inactive);
+
+    document.getElementById('kpi-sess-user').textContent = _num(S.user);
+    document.getElementById('kpi-sess-merchant').textContent = _num(S.merchant);
+
+    document.getElementById('kpi-tx-today').textContent = _num(T.today);
+    document.getElementById('kpi-pts-today').textContent = _num(T.ptsToday);
+    document.getElementById('kpi-tx-7d').textContent = _num(T.last7d);
+    document.getElementById('kpi-tx-avg7d').textContent = _num(T.avgTx7d);
+
+    document.getElementById('kpi-bal-nonzero').textContent = _num(B.nonZero);
+    document.getElementById('kpi-bal-avg').textContent = _num(B.avg);
+
+    document.getElementById('kpi-errors-24h').textContent = _num(m.errors24h);
+
+    const sw = m.storage || [];
+    const ul = document.getElementById('storage-warns');
+    ul.innerHTML = '';
+    sw.forEach(s=>{
+      const li = document.createElement('li');
+      li.textContent = s.name + ': ' + _num(s.rows) + ' rows' + (s.warn?' — ⚠️ large':'');
+      ul.appendChild(li);
+    });
+
+    const sh = p.should || {};
+    const tbodyIn = document.getElementById('tbl-inactive30'); tbodyIn.innerHTML='';
+    (sh.inactiveMerchants30d||[]).forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r.merchantId||''}</td><td>${r.name||''}</td>`;
+      tbodyIn.appendChild(tr);
+    });
+
+    const tbodyTop = document.getElementById('tbl-top-7d'); tbodyTop.innerHTML='';
+    (sh.topMerchants7d||[]).forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r.merchantId||''}</td><td class="num">${_num(r.count)}</td><td class="num">${_num(r.points)}</td>`;
+      tbodyTop.appendChild(tr);
+    });
+
+    document.getElementById('circ-collect').textContent = _num((sh.circulation||{}).collectMonth);
+    document.getElementById('circ-redeem').textContent  = _num((sh.circulation||{}).redeemMonth);
+    document.getElementById('circ-ratio').textContent   = _pct((sh.circulation||{}).redemptionRatio);
+
+    const sys = sh.system || {};
+    document.getElementById('sys-last-admin').textContent = _short(sys.lastAdminLogin);
+    document.getElementById('sys-last-purge').textContent = _short(sys.lastPurgeRun);
+    document.getElementById('sys-next-house').textContent = sys.nextScheduledHousekeeping || '—';
+
+    const n = p.nice || {};
+    const tu = document.getElementById('tbl-top-users'); tu.innerHTML='';
+    (n.topUsers10||[]).forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r.memberId||''}</td><td class="num">${_num(r.points)}</td>`;
+      tu.appendChild(tr);
+    });
+
+    const mam = document.getElementById('tbl-most-active-merch'); mam.innerHTML='';
+    (n.mostActiveMerchantsByMembers||[]).forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r.merchantId||''}</td><td class="num">${_num(r.uniqueMembers)}</td>`;
+      mam.appendChild(tr);
+    });
+
+    document.getElementById('churn-60d').textContent = _num(n.churn60d);
+
+    const geoC = document.getElementById('geo-countries'); geoC.innerHTML='';
+    const countries = n.geo && n.geo.countries ? n.geo.countries : {};
+    Object.entries(countries).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([k,v])=>{
+      const li = document.createElement('li'); li.textContent = k + ': ' + _num(v); geoC.appendChild(li);
+    });
+
+    const al = document.getElementById('alerts'); al.innerHTML='';
+    (n.alerts||[]).forEach(msg=>{
+      const li = document.createElement('li'); li.textContent = msg; al.appendChild(li);
+    });
+  }
+
+  function loadVisibility_(){
+    const sid = sessionStorage.getItem('asid')||'';
+    google.script.run
+      .withSuccessHandler(renderVis_)
+      .withFailureHandler(err => showBanner('error', (err && err.message) || 'Error loading visibility'))
+      .adminGetVisibility(sid);
+  }
+  document.getElementById('btn-vis-refresh').onclick = loadVisibility_;
+
+  function renderLogs_(rows){
+    const tbl = $('tbl-logs');
+    if (!tbl) return;
+    const tb = tbl.querySelector('tbody');
+    tb.innerHTML = '';
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      const td1 = document.createElement('td'); td1.textContent = r.at || '—';
+      const td2 = document.createElement('td'); td2.textContent = r.type || '—';
+      const td3 = document.createElement('td'); td3.textContent = r.msg || '';
+      tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+      tb.appendChild(tr);
+    });
+    applyResponsiveLabels_(tbl);
+  }
+
+  function getLogFilters_(){
+    const only = (document.getElementById('log-onlyerr')?.value || 'no').toLowerCase() === 'yes';
+    return {
+      q: document.getElementById('log-q')?.value?.trim() || '',
+      type: document.getElementById('log-type')?.value?.trim() || '',
+      onlyErrors: only,
+      fromIso: document.getElementById('log-from')?.value?.trim() || '',
+      toIso: document.getElementById('log-to')?.value?.trim() || '',
+      limit: Number(document.getElementById('log-limit')?.value || 200)
+    };
+  }
+
+  function loadLogs_(){
+    const sid = sessionStorage.getItem('asid')||'';
+    const opts = getLogFilters_();
+    google.script.run
+      .withSuccessHandler(renderLogs_)
+      .withFailureHandler(err => showBanner('error', (err&&err.message)||'Error loading logs'))
+      .adminListLogsFiltered(sid, opts);
+  }
+
+  const __btnLogsApply = document.getElementById('btn-logs-apply');
+  if (__btnLogsApply) __btnLogsApply.onclick = loadLogs_;
+
+  const __btnLogsRefresh = document.getElementById('btn-refresh-logs');
+  if (__btnLogsRefresh) __btnLogsRefresh.onclick = loadLogs_;
+
+  ['log-q','log-type','log-from','log-to','log-limit'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') loadLogs_(); });
+  });
+
+  function renderMembers_(rows){
+    const tb = document.getElementById('tbl-members').querySelector('tbody');
+    tb.innerHTML = '';
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      const name = ((r.first||'') + ' ' + (r.last||'')).trim();
+      [
+        r.memberId, name, r.email, r.prefComms || '—',
+        r.phone || '—', r.whatsapp || '—', (String(r.optMarketing).toLowerCase()==='true'?'yes':'no'),
+        r.utm_source||'—', r.utm_medium||'—', r.utm_campaign||'—',
+        r.city||'—', r.country||'—', r.createdAt||'—'
+      ].forEach(x=>{
+        const td = document.createElement('td'); td.textContent = x; tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    document.getElementById('mc-msg').textContent = rows.length + ' rows';
+  }
+
+  document.getElementById('btn-mc-load').onclick = ()=>{
+    const sid = sessionStorage.getItem('asid')||'';
+    const filters = {
+      q: document.getElementById('mc-q').value.trim(),
+      prefComms: document.getElementById('mc-pref').value,
+      optMarketing: document.getElementById('mc-opt').value,
+      utm_source: document.getElementById('mc-usrc').value.trim(),
+      utm_medium: document.getElementById('mc-umed').value.trim(),
+      utm_campaign: document.getElementById('mc-ucamp').value.trim(),
+      city: document.getElementById('mc-city').value.trim(),
+      country: document.getElementById('mc-country').value.trim(),
+    };
+    google.script.run
+      .withSuccessHandler(renderMembers_)
+      .withFailureHandler(err => { const t=(err && err.message) || 'Error'; document.getElementById('mc-msg').textContent = t; showBanner('error', t); })
+      .adminListMembers(sid, filters);
+  };
+
+  document.getElementById('btn-mc-summary').onclick = ()=>{
+    const sid = sessionStorage.getItem('asid')||'';
+    google.script.run
+      .withSuccessHandler(sum=>{
+        const top = Object.entries(sum.utm_campaign).sort((a,b)=>b[1]-a[1]).slice(0,5).map(x=>x[0]+':'+x[1]).join(', ');
+        const msg = 'Total: ' + sum.total +
+          '   Pref: ' + JSON.stringify(sum.pref) +
+          '   Opt in yes or no: ' + sum.optMarketing.yes + '/' + sum.optMarketing.no +
+          '   Top campaigns: ' + top;
+        showBanner('info', msg, { persist:true });
+      })
+      .withFailureHandler(err => showBanner('error', (err && err.message)||'Error'))
+      .adminMembersSummary(sid);
+  };
+
+  $('form-change-pin').onsubmit = (e) => {
+    e.preventDefault();
+    const u = $('cp-username').value;
+    const oldPin = $('cp-old-pin').value;
+    const newPin = $('cp-new-pin').value;
+    const confirmPin = $('cp-confirm-pin').value;
+    const msg = $('cp-msg');
+    msg.textContent = '';
+
+    if (!/^[0-9]{6}$/.test(newPin)) { msg.textContent = 'New PIN must be 6 digits.'; return; }
+    if (newPin !== confirmPin) { msg.textContent = 'New PINs do not match.'; return; }
+    if (oldPin === newPin) { msg.textContent = 'New PIN must be different from your temporary PIN.'; return; }
+
+    msg.textContent = 'Updating PIN...';
+
+    google.script.run
+      .withSuccessHandler(res => {
+        show('signin');
+        $('si-username').value = res.username;
+        $('si-pin').value = '';
+        $('si-msg').textContent = 'Success! Please sign in with your new PIN.';
+        showBanner('success', 'PIN updated. Please sign in again.');
+      })
+      .withFailureHandler(err => {
+        const t = (err && err.message) || 'Failed to update PIN.';
+        msg.textContent = t;
+        showBanner('error', t);
+      })
+      .adminChangeOwnPin(u, oldPin, newPin);
+  };
+
+  // hard lock horizontal scroll across browsers
+  (function lockHorizontal(){
+    const el = document.scrollingElement || document.documentElement;
+    const fix = () => {
+      if (el.scrollLeft !== 0) el.scrollLeft = 0;
+      if (window.scrollX !== 0) window.scrollTo(0, window.scrollY);
+    };
+    window.addEventListener('scroll', fix, { passive: true });
+    window.addEventListener('resize', fix, { passive: true });
+  })();
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setVersionBadge_();
+
+    // keep boot state until validation finishes to avoid sign in flash on refresh
+    const sid = sessionStorage.getItem('asid') || '';
+    if (!sid) {
+      document.body.classList.remove('boot');
+      const splash = $('boot-splash'); if (splash) splash.style.display = 'none';
+      enableAutoLabeling_();
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(v => {
+        if (v && v.ok) {
+          $('whoami').textContent = 'Signed in as ' + (v.username || '');
+          show('admin');
+          normalizeViewport();
+          loadConfig_();
+          loadLogs_();
+          loadAdmins_();
+          loadVisibility_();
+          loadCampaigns_();
+          loadRequests_(); // <-- new    
+          loadCouponRequests_(); // coupons UI   
+          loadLiveCoupons_() 
+          startInactivityTimer_();
+          enableAutoLabeling_();
+          showBanner('info', 'Session restored.');
+        } else {
+          sessionStorage.removeItem('asid');
+          show('signin');
+          enableAutoLabeling_();
+        }
+        document.body.classList.remove('boot');
+        const splash = $('boot-splash'); if (splash) splash.style.display = 'none';
+      })
+      .withFailureHandler(() => {
+        sessionStorage.removeItem('asid');
+        show('signin');
+        enableAutoLabeling_();
+        document.body.classList.remove('boot');
+        const splash = $('boot-splash'); if (splash) splash.style.display = 'none';
+      })
+      .validateASession(sid);
+  });
+  </script>
+</body>
+</html>

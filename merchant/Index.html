@@ -1,0 +1,3210 @@
+<!-- ============================= -->
+<!-- File: Index.html (Merchant)   -->
+<!-- ============================= -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="referrer" content="same-origin" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Merchant App</title>
+  <style>
+    :root{
+      --mx: 940px;
+      --pad: 16px;
+      --gap: 12px;
+      --ring: 1px solid #e5e7eb;
+      --muted: #5f6b7a;
+      --bg-soft: #fafafa;
+      --bg-page: #ffffff;
+      --radius: 10px;
+      --shadow: 0 1px 2px rgba(0,0,0,.06), 0 6px 24px rgba(0,0,0,.06);
+      --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * , *::before , *::after { box-sizing: border-box; }
+    html , body { height: 100%; }
+    html { overflow-x: hidden; }
+    body {
+      font-family: var(--font);
+      font-size: 15px;
+      margin: 0;
+      background: var(--bg-page);
+      color: #0f172a;
+      line-height: 1.45;
+      overflow-x: clip;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overscroll-behavior-x: none;
+      touch-action: pan-y pinch-zoom;
+    }
+
+
+    /* layout */
+    .container{
+      max-width: var(--mx);
+      width: min(100%, var(--mx));
+      margin-left: auto;
+      margin-right: auto;
+      padding-top: 20px;
+      padding-bottom: 56px;
+      padding-left: max(var(--pad), env(safe-area-inset-left, 0px) + 12px);
+      padding-right: max(var(--pad), env(safe-area-inset-right, 0px) + 12px);
+      contain: inline-size;
+      display: grid;
+      gap: var(--gap);
+    }
+
+    /* adaptive centering and overflow hardening */
+    .container{ padding-inline: 16px; }
+    @supports (padding: max(0px)){
+      .container{
+        padding-inline-start: max(16px, calc(env(safe-area-inset-left, 0px) + 12px));
+        padding-inline-end:   max(16px, calc(env(safe-area-inset-right, 0px) + 12px));
+      }
+    }
+    .stack{ display: grid; gap: var(--gap); }
+    .inline{ display: grid; gap: 10px; grid-template-columns: 1fr; }
+    .btns{ display: grid; gap: 8px; grid-auto-flow: row; }
+    .right { margin-left: auto; }
+
+    /* cards */
+    .card{
+      background: #fff;
+      border: var(--ring);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+
+    /* headings and text */
+    h1, h2, h3, h4 { margin: 0 0 8px; line-height: 1.2; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 17px; }
+    p  { margin: 8px 0 12px; }
+    .muted{ color: var(--muted); }
+    :where(p, small, li, td, th, button, input, label, code){
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    /* controls */
+    input, button, select {
+      padding: 8px 10px;
+      margin: 4px 0;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font: inherit;
+    }
+
+    /* stop iOS focus zoom by keeping form controls at least 16px */
+    input, select, textarea {
+      font-size: 16px;
+    }    
+    input, select { width: 100%; }
+    button{
+      background: #0ea5e9;
+      color: #fff;
+      border: 0;
+      cursor: pointer;
+    }
+    button:hover{ filter: brightness(.98); }
+    button:disabled{ opacity:.6; cursor:not-allowed; }
+
+    /* small screens micro tune */
+    @media (max-width: 360px){
+      .card{ padding: 10px; }
+      body{ font-size: 14px; }
+      button{ padding: 5px 9px; font-size: .9em; }
+    }
+
+    /* center main app like admin */
+    #view-pos{
+      display: grid;
+      justify-items: center;
+      font-size: .95em;
+    }
+    #view-pos .card{
+      width: min(100%, 920px);
+      margin-inline: auto;
+      max-width: 100%;
+    }
+
+    /* tabs */
+    .tabs { display:flex; gap:8px; margin:12px 0; flex-wrap: wrap; }
+    .tab-btn { 
+      padding:8px 12px; 
+      border:1px solid #334155;              /* darker border */
+      background:#0f172a;                    /* slate-900 */
+      color:#ffffff;                         /* high contrast */
+      cursor:pointer; 
+      border-radius:10px; 
+      font-weight:600;
+    }
+    .tab-btn:hover { filter:brightness(1.05); }
+    .tab-btn.active { 
+      background:#ffffff; 
+      color:#0f172a; 
+      border-color:#0f172a; 
+      box-shadow: inset 0 0 0 2px rgba(15,23,42,.15);
+    }
+    .panel { display:none; }
+    .panel.active { display:block; }
+
+    /* kpis */
+    .kpis{ display: grid; gap: 10px; }
+    .kpi{ border: var(--ring); border-radius: 10px; background: var(--bg-soft); padding: 10px 12px; }
+    .kpi b{ display:block; font-size: 17px; margin: 2px 0; }
+    .kpi small{ color: var(--muted); }
+
+    @media(min-width: 960px){
+      .inline{ grid-template-columns: 1fr 1fr; }
+      .btns{ grid-auto-flow: column; justify-content: start; }
+      .kpis{ grid-template-columns: repeat(5, 1fr); }
+    }
+
+    /* charts */
+    .chart-wrap { margin:8px 0 12px; }
+    .chart-wrap img { max-width:100%; height:auto; display:block; }
+
+    /* tables with responsive stack mode */
+    .table-wrap{
+      border: var(--ring);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      contain: content;
+    }
+    .table-scroll{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table{ border-collapse: collapse; width: 100%; min-width: 0; }
+    th, td{ border-top: 1px solid #f1f5f9; padding: 7px 9px; font-size: 12.5px; vertical-align: top; }
+    thead th{ background: #f8fafc; text-align: left; position: sticky; top: 0; }
+    td.num, th.num { text-align: right; }
+
+    @media (max-width: 640px){
+      .table-scroll{ overflow: visible; }
+      table{ display: block; }
+      thead{ display: none; }
+      tbody{ display: grid; gap: 10px; }
+      tbody tr{
+        display: grid;
+        gap: 6px;
+        padding: 10px;
+        border: 1px solid #f1f5f9;
+        border-radius: 10px;
+        background: #fff;
+      }
+      tbody td{ display: grid; gap: 2px; }
+      tbody td::before{
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--muted);
+      }
+      tbody td.num{ justify-items: end; }
+    }
+
+    /* banners and toasts keep original styling with slight tweaks */
+    #app-banner{ position: sticky; top: 0; z-index: 1000; margin-bottom: 12px; }
+    .banner{
+      border: 1px solid transparent;
+      padding: 10px 12px;
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: start;
+      gap: 8px;
+      background:#f0f6ff;
+      border-color:#cfe3ff;
+    }
+    .banner-info    { background:#f0f6ff; border-color:#cfe3ff; }
+    .banner-success { background:#edf9f0; border-color:#cdeed8; }
+    .banner-error   { background:#fff0f0; border-color:#ffd6d6; }
+    .banner strong { min-width:64px; }
+    .banner button.close{
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #toast-container{
+      position: fixed; right: 16px; bottom: 16px; z-index: 1001;
+      display: grid; gap: 8px; max-width: 360px;
+    }
+    .toast{
+      padding: 10px 12px;
+      border: 1px solid transparent; border-radius: 10px;
+      background: #edf9f0;
+      box-shadow: 0 2px 12px rgba(0,0,0,.12);
+    }
+    .toast.info{ background:#f0f6ff; }
+    .toast.error{ background:#fff0f0; }
+    .toast .close{ background: transparent; border: 0; cursor: pointer; float: right; }
+
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Page banner container -->
+    <div id="app-banner" aria-live="polite" role="status"></div>
+    <!-- Toasts at viewport bottom -->
+    <div id="toast-container" aria-live="polite"></div>
+
+    <!-- Loading -->
+    <section id="view-loading" class="card"><p>Loading…</p></section>
+
+    <!-- Sign In -->
+    <section id="view-signin" class="hidden card stack">
+      <h2>Merchant Sign In</h2>
+      <form id="form-signin" class="stack" novalidate>
+        <label>Username
+          <input id="si-username" autocomplete="username" required />
+        </label>
+        <label>Six digit PIN
+          <input id="si-pin" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required />
+        </label>
+        <button type="submit" class="right">Sign In</button>
+      </form>
+      <div id="si-msg" class="muted"></div>
+      <div id="si-lock" class="muted"></div>
+      <div id="si-countdown" class="muted"></div>
+    </section>
+
+    <!-- Force PIN Change -->
+    <section id="view-pinchange" class="hidden card stack">
+      <h2>Change PIN</h2>
+      <p class="small muted">You are using a temporary PIN. Please set a new one to continue.</p>
+      <form id="form-pinchange" class="stack" novalidate>
+        <label>Current temporary PIN
+          <input id="pc-old" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required />
+        </label>
+        <label>New six digit PIN
+          <input id="pc-new1" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required />
+        </label>
+        <label>Confirm new PIN
+          <input id="pc-new2" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required />
+        </label>
+        <div class="btns">
+          <button type="submit">Set PIN</button>
+          <button type="button" id="pc-logout">Cancel</button>
+        </div>
+      </form>
+      <div id="pc-msg" class="muted"></div>
+    </section>
+
+    <!-- POS home -->
+    <section id="view-pos" class="hidden stack">
+      <div class="card stack">
+        <h2>Merchant</h2>
+        <p id="whoami" class="muted">—</p>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button id="tab-pos" class="tab-btn active" type="button">POS</button>
+          <button id="tab-analytics" class="tab-btn" type="button" style="display:none">Analytics</button>
+          <button id="tab-campaigns" class="tab-btn" type="button" style="display:none">Campaigns</button>
+          <button id="tab-coupons" class="tab-btn" type="button" style="display:none">Coupons</button>
+          <button id="tab-staff" class="tab-btn" type="button" style="display:none">Staff</button>
+          <p id="session-timer" style="color:#555; font-size:13px; margin:4px 0 12px;">Session: —</p>
+        </div>
+
+        <!-- POS Panel -->
+        <div id="panel-pos" class="panel active">
+          <form id="form-pos" class="stack" novalidate>
+            <label>Member ID
+              <input id="member-id" placeholder="MBR-XXXXXXXX" required />
+            </label>
+            <label>Total amount (USD)
+              <input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required />
+            </label>
+            <small id="amount-hint" class="muted">Every $2 = 1 point. Redeem: 1 point = $0.01.</small>
+            <label>Mode
+              <select id="mode">
+                <option value="COLLECT">Collect</option>
+                <option value="REDEEM">Redeem</option>
+              </select>
+            </label>
+            <label>Coupon (optional)
+              <input id="coupon" placeholder="COUPON2025" />
+            </label>
+            <div class="btns">
+              <button type="submit">Submit</button>
+              <button type="button" id="btn-logout">Log Out</button>
+            </div>
+            <small class="muted">Tip. Press Enter on the Amount field to submit.</small>
+          </form>
+          <div id="pos-msg" class="muted"></div>
+        </div>
+
+        <!-- Analytics Panel -->
+        <div id="panel-analytics" class="panel">
+          <div style="margin:8px 0; display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+            <label>Range&nbsp;
+              <select id="analytics-range">
+                <option value="today">Today</option>
+                <option value="7d" selected>Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="custom">Custom…</option>
+              </select>
+            </label>
+
+            <span id="custom-range-wrap" style="display:none;">
+              <label>From&nbsp;<input id="analytics-from" type="date"></label>
+              <label style="margin-left:6px;">To&nbsp;<input id="analytics-to" type="date"></label>
+              <button id="btn-apply-range" type="button" style="margin-left:6px;">Apply</button>
+            </span>
+
+            <button id="btn-toggle-chart" type="button" style="margin-left:auto;">Stacked Bars</button>
+            <button id="btn-dl-top" type="button">Download Top Customers (CSV)</button>
+            <button id="btn-dl-recent" type="button">Download Recent TX (CSV)</button>
+            <button id="btn-logout-ana" type="button">Log Out</button>
+          </div>
+
+          <div class="kpis">
+            <div class="kpi"><small>Net Points</small><b id="kpi-net">—</b></div>
+            <div class="kpi"><small>Collected</small><b id="kpi-collect">—</b></div>
+            <div class="kpi"><small>Redeemed</small><b id="kpi-redeem">—</b></div>
+            <div class="kpi"><small>TX Count</small><b id="kpi-tx">—</b></div>
+            <div class="kpi"><small>Unique Members</small><b id="kpi-uniq">—</b></div>
+          </div>
+
+          <div class="chart-wrap">
+            <img id="analytics-chart" alt="Trend: Collect vs Redeem" />
+            <img id="leaderboard-chart" alt="Leaderboard: Top Customers" style="margin-top:12px;" />
+          </div>
+
+
+          <div class="table-wrap">
+            <div class="table-scroll">
+              <table id="tbl-recent">
+                <thead>
+                  <tr>
+                    <th>At</th>
+                    <th>Member</th>
+                    <th>Type</th>
+                    <th class="num">Points</th>
+                    <th>Staff</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-wrap" style="margin-top:8px;">
+            <div class="table-scroll">
+              <table id="tbl-top">
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th class="num">Collected</th>
+                    <th class="num">Redeemed</th>
+                    <th class="num">Net</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="analytics-msg" class="muted"></div>
+        </div>
+        <div id="panel-campaigns" class="panel">
+          
+          <h3 style="margin-top:0;">Active Multiplier Campaigns (Read Only)</h3>
+          
+          <div class="btns" style="justify-content: start;">
+            <button id="btn-load-active-campaigns" type="button">Refresh Active List</button>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-scroll">
+              <table id="tbl-active-campaigns">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th class="num">Multiplier</th>
+                    <th>Window</th>
+                    <th class="num">Max Redemptions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          
+          <hr style="margin:16px 0;">
+          
+          <h3>Campaign Requests (New, Edit, Renew, Deactivate)</h3>
+
+          <div class="btns" style="justify-content: start;">
+            <button id="btn-toggle-new-request" type="button">Create New Request</button>
+            <button id="btn-load-requests" type="button">Refresh Requests List</button>
+          </div>
+
+                    <form id="form-campaign-request" class="stack hidden" novalidate style="border: 1px dashed #ccc; padding: 12px;">
+            <h4><span id="req-form-title">New</span> Campaign Request</h4>
+            
+            <input type="hidden" id="req-source-id" />
+            <input type="hidden" id="req-is-new" value="true" />
+            <input type="hidden" id="req-id" />
+            
+            <div class="inline">
+              <label>Request Type
+                <select id="req-type">
+                  <option value="new" selected>New Campaign</option>
+                  <option value="edit">Modify Existing</option>
+                  <option value="renew">Renew Campaign (New Dates)</option>
+                  <option value="deactivate">Deactivate Campaign</option>
+                </select>
+              </label>
+
+              <!-- NEW: Active campaign selector shown for edit/renew/deactivate -->
+              <label id="req-campaign-wrap" style="display:none;">Select Active Campaign
+                <select id="req-campaign-select"></select>
+              </label>
+
+              <label>Campaign Title
+                <input id="req-title" placeholder="2.5x Points Week" required />
+              </label>
+            </div>
+            
+            <div class="inline">
+              <label>Multiplier (Points x)
+                <input id="req-multiplier" type="number" min="1" step="0.5" value="2" required />
+              </label>
+              <label>Min Spend (Cents)
+                <input id="req-minspend" type="number" min="0" value="0" />
+              </label>
+            </div>
+            
+            <div class="inline">
+              <label>Start Date
+                <input id="req-start" type="date" required />
+              </label>
+              <label>End Date
+                <input id="req-end" type="date" required />
+              </label>
+            </div>
+
+            <div class="inline">
+              <label>Total Max Redemptions (0=Unlimited)
+                <input id="req-max-redemptions" type="number" min="0" value="0" />
+              </label>
+              <label>Budget Cap (Cents, 0=None)
+                <input id="req-budget-cap" type="number" min="0" value="0" />
+              </label>
+            </div>
+            <!-- NEW: per-member redemptions (count), separate from GLOBAL MaxRedemptions -->
+            <label>Per-Member Redemptions (0=Unlimited)
+              <input id="req-permem-reds" type="number" min="0" value="0" />
+            </label>
+            <!-- NEW: per-member bonus cap -->
+            <label>Per-Member Bonus Cap (points, 0=Unlimited)
+              <input id="req-pm-cap" type="number" min="0" value="0" />
+            </label>           
+            <label>Notes / Justification
+              <input id="req-notes" placeholder="Explain the value and duration." />
+            </label>
+            
+            <div class="btns" style="justify-content: end;">
+              <button type="submit" id="btn-submit-request">Submit Request</button>
+              <button type="button" id="btn-cancel-request-form">Cancel</button>
+            </div>
+          </form>
+          
+                    <div class="table-wrap" style="margin-top: 12px;">
+            <div class="table-scroll">
+              <table id="tbl-campaign-requests">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Title / Multiplier</th>
+                    <th>Window</th>
+                    <th>Status / Notes</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="campaign-msg" class="muted"></div>
+        </div>
+
+        <!-- Coupons Panel (NEW TAB) -->
+        <div id="panel-coupons" class="panel">
+          <div class="btns" style="justify-content: end;">
+            <button id="btn-logout-coupons" type="button">Log Out</button>
+          </div>
+
+          <h3>Coupons <span class="muted">(read only)</span></h3>
+          <div class="btns" style="justify-content: start;">
+            <button id="btn-load-coupons" type="button">Load Coupons</button>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-scroll">
+              <table id="tbl-coupons">
+                <thead>
+                  <tr>
+                    <th>Code</th><th>Mode</th><th>Type</th>
+                    <th class="num">Value</th><th class="num">Used</th>
+                    <th class="num">Max</th><th class="num">PerMember</th>
+                    <th>Active</th><th>Window</th><th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="coupon-msg" class="muted"></div>
+
+          <div class="btns" style="justify-content:start; margin-top:8px;">
+            <button id="btn-toggle-coupon-form" type="button">Create / Update Coupon</button>
+          </div>
+
+          <!-- ✅ Upsert Coupon form: contains ONLY coupon fields -->
+          <form id="form-upsert-coupon" class="stack hidden" novalidate style="border:1px dashed #ccc; padding:12px; margin-top:8px;">
+            <h4>Coupon</h4>
+
+            <div class="inline">
+              <label>Code
+                <input id="cpn-code" placeholder="WELCOME50" required />
+              </label>
+              <label>Mode
+                <select id="cpn-mode">
+                  <option value="">(Both)</option>
+                  <option value="COLLECT">COLLECT</option>
+                  <option value="REDEEM">REDEEM</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="inline">
+              <label>Type
+                <select id="cpn-type" required>
+                  <option value="BONUS">BONUS (adds points on COLLECT)</option>
+                  <option value="DISCOUNT">DISCOUNT (reduces points on REDEEM)</option>
+                </select>
+              </label>
+              <label>Value (points)
+                <input id="cpn-value" type="number" min="1" value="50" required />
+              </label>
+            </div>
+
+            <div class="inline">
+              <label>Max Uses (0=unlimited)
+                <input id="cpn-max" type="number" min="0" value="0" />
+              </label>
+              <label>Per-Member Limit (0=unlimited)
+                <input id="cpn-pm" type="number" min="0" value="0" />
+              </label>
+            </div>
+
+            <div class="inline">
+              <label>Start Date (optional)
+                <input id="cpn-start" type="date" />
+              </label>
+              <label>End Date (optional)
+                <input id="cpn-exp" type="date" />
+              </label>
+            </div>
+
+            <label>Notes
+              <input id="cpn-notes" placeholder="Short description (optional)" />
+            </label>
+
+            <div class="btns" style="justify-content:end;">
+              <button type="submit">Save Coupon</button>
+              <button type="button" id="btn-cpn-cancel">Cancel</button>
+            </div>
+          </form>
+
+          <!-- ✅ Coupon Requests: moved OUTSIDE the upsert form, but stays in this panel -->
+          <hr style="margin:16px 0;">
+          <h3>Coupon Requests</h3>
+
+          <div class="btns" style="justify-content:start;">
+            <button id="btn-load-cpnreq">Refresh Requests</button>
+            <button id="btn-toggle-cpnreq-form">Create New Request</button>
+          </div>
+
+          <form id="form-cpnreq" class="stack hidden" novalidate style="border:1px dashed #ccc; padding:12px; margin-top:8px;">
+            <h4>New Coupon Request</h4>
+            <div class="inline">
+              <label>Code <input id="rq-code" required /></label>
+              <label>Mode
+                <select id="rq-mode">
+                  <option value="">(Both)</option>
+                  <option value="COLLECT">COLLECT</option>
+                  <option value="REDEEM">REDEEM</option>
+                </select>
+              </label>
+            </div>
+            <div class="inline">
+              <label>Type
+                <select id="rq-type" required>
+                  <option value="BONUS">BONUS</option>
+                  <option value="DISCOUNT">DISCOUNT</option>
+                </select>
+              </label>
+              <label>Value (points) <input id="rq-value" type="number" min="1" value="50" required /></label>
+            </div>
+            <div class="inline">
+              <label>Max Uses (0=unlimited) <input id="rq-max" type="number" min="0" value="0" /></label>
+              <label>Per-Member Limit (0=unlimited) <input id="rq-pm" type="number" min="0" value="0" /></label>
+            </div>
+            <div class="inline">
+              <label>Start Date <input id="rq-start" type="date" /></label>
+              <label>End Date   <input id="rq-end" type="date" /></label>
+            </div>
+            <label>Notes <input id="rq-notes" /></label>
+            <div class="btns" style="justify-content:end;">
+              <button type="submit">Submit Request</button>
+              <button type="button" id="btn-rq-cancel">Cancel</button>
+            </div>
+          </form>
+
+          <div class="table-wrap" style="margin-top:8px;">
+            <div class="table-scroll">
+              <table id="tbl-cpnreq">
+                <thead>
+                  <tr>
+                    <th>ID</th><th>Code</th><th>Mode/Type</th><th class="num">Value</th>
+                    <th>Window</th><th>Status</th><th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Staff Panel -->
+        <div id="panel-staff" class="panel">
+          <div class="btns" style="justify-content: end;">
+            <button id="btn-logout-staff" type="button">Log Out</button>
+          </div>
+
+          <div class="btns">
+            <button id="btn-staff-load">Load Staff</button>
+          </div>
+          <div class="table-wrap">
+            <div class="table-scroll">
+              <table id="tbl-staff">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Active</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="staff-msg" class="muted"></div>
+          <hr style="margin:16px 0;">
+
+          <form id="form-reset-staff" class="stack" novalidate>
+            <label>Staff username
+              <input id="rstf-username" placeholder="rami.ahmad" required />
+            </label>
+            <label>Temporary PIN six digits
+              <input id="rstf-temp" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required />
+            </label>
+            <button type="submit" class="right">Reset Staff PIN</button>
+          </form>
+          <div id="rstf-msg" class="muted"></div>
+
+          <p class="small muted">This sets a temporary PIN and clears lockouts for that staff. They will be forced to change the PIN at first sign in.</p>
+
+          <hr style="margin:16px 0;">
+          </div>
+
+
+        <div id="inact-msg" class="muted"></div>
+      </div>
+    </section>
+
+    <footer id="app-footer" class="muted" style="margin-top:8px;font-size:11px;text-align:right;">
+      <span>Cashbeik merchant app</span>
+      <span aria-hidden="true"> • </span>
+      <span>version <?= appVersion ?></span>
+    </footer>
+
+<script>
+  const APP_VERSION = '<?= appVersion ?>' || 'dev';
+
+  /* ───── Coupons policy flag: keep direct edits OFF ───── */
+  const REQUESTS_ONLY_COUPONS = true;  // ← leave true in production  
+
+  // safer: inject server JSON into a <script type="application/json">
+</script>
+<script id="init-params" type="application/json"><?!= initParamsJson ?></script>
+<script id="init-qs" type="application/json"><?!= JSON.stringify(initQueryString || '') ?></script>
+<script>
+  const INIT_PARAMS = (() => {
+    try { return JSON.parse(document.getElementById('init-params').textContent || '{}'); } catch(_) { return {}; }
+  })();
+  const INIT_QS = (() => {
+    try { return JSON.parse(document.getElementById('init-qs').textContent || '""'); } catch(_) { return ''; }
+  })();
+
+
+  // tiny helper
+  function $(id){ return document.getElementById(id); }
+
+  // Analytics UI state
+  let __chartMode = 'line';               // 'line' | 'stacked'
+  let __lastAnalyticsPayload = null;      // last stats payload rendered
+  let __lastRecentRows = [];              // last recent TX rows rendered
+
+  // Campaigns UI cache
+  let __activeCampaignsCache = [];        // NEW: keep latest active campaigns list
+
+  // Request form baseline snapshot (to detect changes)
+  let __reqBaseline = null;
+
+  function getRequestFormSnapshot_() {
+    const g = id => (document.getElementById(id)?.value ?? '');
+    return {
+      type: g('req-type'),
+      sourceId: g('req-source-id'),
+      title: g('req-title'),
+      multiplier: g('req-multiplier'),
+      minSpend: g('req-minspend'),
+      maxRedemptions: g('req-max-redemptions'),
+      budgetCap: g('req-budget-cap'),
+      start: g('req-start'),
+      end: g('req-end'),
+      notes: g('req-notes'),
+      pmCap: g('req-pm-cap'),
+      perMemReds: g('req-permem-reds')
+    };
+  }
+
+  function isFormChangedFromBaseline_() {
+    if (!__reqBaseline) return false;
+    const cur = getRequestFormSnapshot_();
+    return Object.keys(__reqBaseline).some(k => String(cur[k]) !== String(__reqBaseline[k]));
+  }
+
+  function setSubmitEnabled_(enabled) {
+    const btn = document.getElementById('btn-submit-request');
+    if (!btn) return;
+    btn.disabled = !enabled;
+    btn.style.opacity = enabled ? '' : '.6';
+    btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+  }
+
+  function startWatchingFormChanges_() {
+    const form = document.getElementById('form-campaign-request');
+    if (!form) return;
+    const onAny = () => setSubmitEnabled_(isFormChangedFromBaseline_());
+    form.querySelectorAll('input,select,textarea').forEach(el => {
+      el.addEventListener('input', onAny);
+      el.addEventListener('change', onAny);
+    });
+    // initialize
+    setSubmitEnabled_(isFormChangedFromBaseline_());
+  }
+  
+
+  // viewport normalizer
+  function normalizeViewport(opts){
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+
+    const original = meta.getAttribute('content') || 'width=device-width, initial-scale=1, viewport-fit=cover';
+    const forced = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+    meta.setAttribute('content', forced);
+
+    const zeroX = () => {
+      if (document.scrollingElement) document.scrollingElement.scrollLeft = 0;
+      if (window.scrollX !== 0) window.scrollTo(0, window.scrollY);
+    };
+    zeroX();
+
+    const vv = window.visualViewport || null;
+    let tries = 0;
+    const done = () => {
+      meta.setAttribute('content', original.includes('initial-scale=') ? original : original + ', initial-scale=1');
+      zeroX();
+    };
+
+    const tick = () => {
+      tries += 1;
+      zeroX();
+      const ok = !vv || Math.abs((vv.scale || 1) - 1) < 0.01 || tries > 8;
+      if (ok) {
+        setTimeout(done, 50);
+      } else {
+        requestAnimationFrame(tick);
+      }
+    };
+    requestAnimationFrame(tick);
+  }
+
+  // run the normalizer when form fields gain or lose focus
+  document.addEventListener('focusin', function(ev){
+    const t = ev.target;
+    if (!t) return;
+    if (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') {
+      normalizeViewport();
+    }
+  }, { passive: true });
+
+  document.addEventListener('focusout', function(ev){
+    const t = ev.target;
+    if (!t) return;
+    if (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') {
+      setTimeout(normalizeViewport, 50);
+    }
+  }, { passive: true });  
+
+  // hard lock horizontal scroll
+  (function lockHorizontal(){
+    const el = document.scrollingElement || document.documentElement;
+    const fix = () => {
+      if (el.scrollLeft !== 0) el.scrollLeft = 0;
+      if (window.scrollX !== 0) window.scrollTo(0, window.scrollY);
+    };
+    window.addEventListener('scroll', fix, { passive: true });
+    window.addEventListener('resize', fix, { passive: true });
+  })();
+
+  /* responsive table labels like admin */
+  function applyResponsiveLabels_(table){
+    if (!table || !table.tHead) return;
+    const headers = Array.from(table.tHead.querySelectorAll('th')).map(th => th.textContent.trim());
+    const rows = table.tBodies[0] ? Array.from(table.tBodies[0].rows) : [];
+    rows.forEach(tr => {
+      Array.from(tr.cells).forEach((td, i) => {
+        const label = headers[i] || '';
+        if (label && td.getAttribute('data-label') !== label) {
+          td.setAttribute('data-label', label);
+        }
+      });
+    });
+  }
+  function enableAutoLabeling_(){
+    const all = document.querySelectorAll('table');
+    all.forEach(applyResponsiveLabels_);
+    const obs = new MutationObserver(muts => {
+      const seen = new Set();
+      muts.forEach(m => {
+        const t = m.target && m.target.closest ? m.target.closest('table') : null;
+        if (t && !seen.has(t)) { seen.add(t); applyResponsiveLabels_(t); }
+      });
+    });
+    document.querySelectorAll('table tbody').forEach(tb => {
+      obs.observe(tb, { childList: true, subtree: true });
+    });
+  }
+
+  function reportClientError_(message, stack, extra){
+    try{
+      const payload = {
+        sid: (function(){ try{ return sessionStorage.getItem('msid') || ''; } catch(_){ return ''; } })(),
+        ua: navigator.userAgent || '',
+        location: location.href || '',
+        message: String(message || ''),
+        stack: String(stack || ''),
+        version: APP_VERSION || '',
+        extra: extra || null
+      };
+      google.script.run.merchantReportError(payload);
+    }catch(_){}
+  }
+
+  window.addEventListener('error', function(e){
+    const msg = e && e.message ? e.message : 'window.error';
+    const st = e && e.error && e.error.stack ? e.error.stack : '';
+    reportClientError_(msg, st, { line: e.lineno, col: e.colno, src: e.filename });
+  });
+
+  window.addEventListener('unhandledrejection', function(e){
+    const reason = e && e.reason ? e.reason : 'unhandledrejection';
+    let msg = '', st = '';
+    try{
+      if (typeof reason === 'string') msg = reason;
+      else if (reason && reason.message) msg = reason.message;
+      if (reason && reason.stack) st = reason.stack;
+    }catch(_){}
+    reportClientError_(msg || 'unhandledrejection', st || '', null);
+  });
+
+
+  // page banner helpers
+  let __bannerTimer = null;
+  function clearBanner(){
+    clearTimeout(__bannerTimer);
+    __bannerTimer = null;
+    const c = $('app-banner');
+    if (c) c.innerHTML = '';
+  }
+  function showBanner(kind, message, opts){
+    clearBanner();
+    const c = $('app-banner'); if (!c) return;
+    const type = (kind||'info').toLowerCase();
+    const cls = type === 'success' ? 'banner-success' : type === 'error' ? 'banner-error' : 'banner-info';
+    const label = type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info';
+    const el = document.createElement('div');
+    el.className = 'banner ' + cls;
+    el.innerHTML = '<strong>'+label+':</strong><span>'+String(message||'')+'</span>' +
+                   '<button class="close" aria-label="Close" title="Close">×</button>';
+    el.querySelector('button.close').onclick = clearBanner;
+    c.appendChild(el);
+
+    const shouldScroll = opts && 'scroll' in opts ? !!opts.scroll : (type === 'error');
+    if (shouldScroll) {
+      const r = c.getBoundingClientRect();
+      const fullyVisible = r.top >= 0 && r.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+      if (!fullyVisible) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    const ms = opts && opts.persist ? 0 : 6000;
+    if (ms > 0) __bannerTimer = setTimeout(clearBanner, ms);
+  }
+
+  // toasts
+  function showToast(kind, message, ms=3500){
+    const cont = $('toast-container'); if (!cont) return;
+    const t = document.createElement('div');
+    t.className = 'toast ' + (kind||'success');
+    t.innerHTML = '<button class="close" aria-label="Close">×</button>' + String(message||'');
+    t.querySelector('.close').onclick = () => cont.removeChild(t);
+    cont.appendChild(t);
+    if (ms > 0) setTimeout(() => { if (t.parentNode) cont.removeChild(t); }, ms);
+  }
+
+  // optional section message with scroll into view
+  function setSectionMsg(id, kind, text){
+    const el = $(id); if (!el) return;
+    el.textContent = text || '';
+    if (!text) return;
+    el.style.color = kind === 'error' ? '#b00020' : kind === 'success' ? '#1b5e20' : '#333';
+    const r = el.getBoundingClientRect();
+    const fullyVisible = r.top >= 0 && r.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+    if (!fullyVisible) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // Views
+  const VIEWS = ['loading','signin','pos','pinchange'];
+  let inactivityTimer = null;
+  let __inactResetHandler = null;
+  let __role = '';
+  let __merchantId = '';
+  let __username = '';
+
+  // Tab helpers
+  function setActivePanel_(which){
+    if ((__role !== 'manager') && (which === 'analytics' || which === 'staff' || which === 'campaigns')) {
+      which = 'pos';
+    }
+
+    const posBtn  = document.getElementById('tab-pos');
+    const anaBtn  = document.getElementById('tab-analytics');
+    const campBtn = document.getElementById('tab-campaigns');
+    const cpnBtn  = document.getElementById('tab-coupons'); // NEW
+    const stfBtn  = document.getElementById('tab-staff');
+
+    const pPos  = document.getElementById('panel-pos');
+    const pAna  = document.getElementById('panel-analytics');
+    const pCamp = document.getElementById('panel-campaigns');
+    const pCpn  = document.getElementById('panel-coupons');  // NEW
+    const pStf  = document.getElementById('panel-staff');
+
+    [posBtn, anaBtn, campBtn, cpnBtn, stfBtn].forEach(b => b && b.classList.remove('active'));
+    [pPos, pAna, pCamp, pCpn, pStf].forEach(p => p && p.classList.remove('active'));
+
+    if (which === 'analytics') {
+      if (anaBtn) anaBtn.classList.add('active');
+      if (pAna) pAna.classList.add('active');
+    } else if (which === 'campaigns') {
+      if (campBtn) campBtn.classList.add('active');
+      if (pCamp) pCamp.classList.add('active');
+    } else if (which === 'coupons') {                   // NEW
+      if (cpnBtn) cpnBtn.classList.add('active');
+      if (pCpn) pCpn.classList.add('active');
+    } else if (which === 'staff') {    
+      if (stfBtn) stfBtn.classList.add('active');
+      if (pStf) pStf.classList.add('active');
+    } else {
+      if (posBtn) posBtn.classList.add('active');
+      if (pPos) pPos.classList.add('active');
+      applyPrefillToForm_();
+      setTimeout(applyPrefillToForm_, 0);
+    }
+  }
+
+
+  function show(view) {
+    VIEWS.forEach(v => {
+      const el = document.getElementById('view-' + v);
+      if (el) el.classList.add('hidden');
+    });
+    const tgt = document.getElementById('view-' + view);
+    if (tgt) tgt.classList.remove('hidden');
+
+    if (view === 'signin') {
+      const pin = document.getElementById('si-pin'); if (pin) pin.value = '';
+    }
+    if (view === 'pos') {
+      applyPrefillToForm_();
+      applyUrlPrefill_();      // ✅ NEW: read URL now
+      setTimeout(() => {       // run again after paint in case of late layout
+        applyPrefillToForm_();
+        applyUrlPrefill_();
+      }, 0);      
+      enableAutoLabeling_();
+    }
+  }
+
+  window.onpopstate = null;
+
+  // SID storage
+  function setMsid(sid) {
+    try { sessionStorage.setItem('msid', sid); } catch(_) {}
+    document.cookie = 'msid=' + encodeURIComponent(sid) + '; path=/; SameSite=Lax; Secure';
+  }
+  function getMsid() {
+    const m = document.cookie.match(/(?:^|; )msid=([^;]*)/);
+    if (m) return decodeURIComponent(m[1]);
+    try { return sessionStorage.getItem('msid') || ''; } catch(_) { return ''; }
+  }
+  function clearMsid() {
+    try { sessionStorage.removeItem('msid'); } catch(_) {}
+    document.cookie = 'msid=; path=/; max-age=0; SameSite=Lax; Secure';
+  }
+
+  function setStageId(id){
+    try { sessionStorage.setItem('pref_stage', String(id||'')); } catch(_){}
+    document.cookie = 'pref_stage=' + encodeURIComponent(String(id||'')) + '; path=/; max-age=600; SameSite=Lax; Secure';
+  }
+  function getStageId(){
+    try { const v = sessionStorage.getItem('pref_stage'); if (v) return v; } catch(_){}
+    const parts = ('; ' + document.cookie).split('; pref_stage=');
+    if (parts.length > 1) return decodeURIComponent(parts.pop().split(';')[0]);
+    return '';
+  }
+  function clearStageId(){
+    try { sessionStorage.removeItem('pref_stage'); } catch(_){}
+    document.cookie = 'pref_stage=; path=/; max-age=0; SameSite=Lax; Secure';
+  }
+
+  // Prefill
+  function setPrefill(member, mode) {
+    const m  = (member || '').toUpperCase();
+    const mo = (mode   || '').toUpperCase();
+
+    try { sessionStorage.setItem('pref_member', m); } catch(_) {}
+    try { sessionStorage.setItem('pref_mode',   mo); } catch(_) {}
+
+    document.cookie = 'pref_member=' + encodeURIComponent(m)  + '; path=/; max-age=600; SameSite=Lax; Secure';
+    document.cookie = 'pref_mode='   + encodeURIComponent(mo) + '; path=/; max-age=600; SameSite=Lax; Secure';
+
+    // ✅ CRITICAL: apply now, even if POS is already visible
+    applyPrefillToForm_();
+    applyUrlPrefill_();            // ✅ and from URL if present    
+  }
+
+  function applyUrlPrefill_() {
+    // Read from server-injected params + live URL + hash (case-insensitive)
+    const params = {};
+    try {
+      Object.assign(params, INIT_PARAMS || {});
+      const usp = new URLSearchParams(location.search || '');
+      usp.forEach((v, k) => { params[k] = v; });
+      const frag = (location.hash || '').replace(/^#/, '');
+      const hsp = new URLSearchParams(frag);
+      hsp.forEach((v, k) => { params[k] = v; });
+    } catch(_) {}
+
+    const getCI = (keys) => {
+      const map = {};
+      Object.keys(params).forEach(k => map[k.toLowerCase()] = params[k]);
+      for (const k of keys) {
+        const v = map[k.toLowerCase()];
+        if (v != null && String(v).trim() !== '') return String(v).trim();
+      }
+      return '';
+    };
+
+    const rawMember = (getCI(['member','mid']) || '').trim();
+    const rawMode   = (getCI(['mode']) || '').trim();
+    const rawCoupon = (getCI(['coupon','cpn']) || '').trim();
+
+    const member = rawMember.toUpperCase();
+    const mode   = rawMode.toUpperCase();
+    const coupon = rawCoupon.toUpperCase();
+
+    const validMember = /^MBR-[A-Z0-9]{8}$/.test(member);
+    const validMode   = (mode === 'COLLECT' || mode === 'REDEEM');
+    const validCoupon = !coupon || /^[A-Z0-9._-]{3,32}$/.test(coupon);
+
+    if (validMember || validMode) {
+      setPrefill(validMember ? member : '', validMode ? mode : '');
+    }
+
+    const mi  = document.getElementById('member-id');
+    const sel = document.getElementById('mode');
+    const ci  = document.getElementById('coupon');
+    if (mi  && validMember) mi.value = member;
+    if (sel && validMode)   sel.value = mode;
+    if (ci  && validCoupon && coupon) ci.value = coupon;
+  }
+
+  function getCookie_(name) {
+    const parts = ('; ' + document.cookie).split('; ' + name + '=');
+    if (parts.length < 2) return '';
+    return decodeURIComponent(parts.pop().split(';')[0]);
+  }
+  function applyPrefillToForm_() {
+    let m = '', mo = '';
+    try { m = (sessionStorage.getItem('pref_member') || '').toUpperCase(); } catch(_) {}
+    try { mo = (sessionStorage.getItem('pref_mode') || '').toUpperCase(); } catch(_) {}
+    if (!m)  m  = (getCookie_('pref_member') || '').toUpperCase();
+    if (!mo) mo = (getCookie_('pref_mode') || '').toUpperCase();
+
+    const mi = document.getElementById('member-id');
+    const sel = document.getElementById('mode');
+    if (mi && m) mi.value = m;
+    if (sel && (mo === 'COLLECT' || mo === 'REDEEM')) sel.value = mo;
+  }
+
+  (function ensurePrefillAlwaysApplies_(){
+    // Re-apply when we get the broadcast
+    document.addEventListener('prefill:updated', () => {
+      // Minimal retry loop in case the input isn't painted yet
+      let tries = 0;
+      const tick = () => {
+        applyPrefillToForm_();
+        const mi = document.getElementById('member-id');
+        const ok = mi && mi.value && mi.value.startsWith('MBR-');
+        if (!ok && tries++ < 10) setTimeout(tick, 50); // try for ~500ms max
+      };
+      tick();
+    });
+
+    // Also try once after first POS paint (for ultra-slow devices)
+    const origShow = show;
+    window.show = function(view){
+      origShow(view);
+      if (view === 'pos') {
+        let tries = 0;
+        const mi = () => document.getElementById('member-id');
+        const kick = () => {
+          applyPrefillToForm_();
+          if (!(mi() && mi().value) && tries++ < 10) setTimeout(kick, 50);
+        };
+        kick();
+      }
+    };
+  })();
+
+
+  // Guard
+  function requireMSessionThen(viewIfOk='pos') {
+    const sid = getMsid();
+    return new Promise(resolve => {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(() => resolve(null))
+        .validateMSession(sid);
+    }).then(res => {
+      if (res && res.ok) {
+        if (res.sid) setMsid(res.sid);
+        const who = document.getElementById('whoami');
+        if (who) who.textContent =
+          'Signed in as ' + (res.username || '') + ' @ ' + (res.merchantId || '') + ' (' + (res.role || '') + ')';
+        __role = String(res.role || '').toLowerCase();
+        __merchantId = String(res.merchantId || '');
+        __username = String(res.username || '');
+
+        if (res.mustChange === true) {
+          stopInactivityTimer_();
+          show('pinchange');
+          return true;
+        }
+
+        const tabAna = document.getElementById('tab-analytics');
+        if (tabAna) tabAna.style.display = (__role === 'manager') ? '' : 'none';
+        const tabCamp = document.getElementById('tab-campaigns');
+        if (tabCamp) tabCamp.style.display = (__role === 'manager') ? '' : 'none';
+        const tabCpn = document.getElementById('tab-coupons');                 // NEW
+        if (tabCpn) tabCpn.style.display = (__role === 'manager') ? '' : 'none';
+        const tabStf = document.getElementById('tab-staff');
+        if (tabStf) tabStf.style.display = (__role === 'manager') ? '' : 'none';
+
+        // Hide "Create / Update Coupon" CTA when in requests-only mode
+        const cpnCta = document.getElementById('btn-toggle-coupon-form');
+        if (cpnCta) cpnCta.style.display = REQUESTS_ONLY_COUPONS ? 'none' : '';
+
+
+        
+        // --- ASYNC PREFILL RETRIEVAL ---
+        
+        // The 'finalizer' centralizes view transition logic
+        const finalizer = () => {
+          // This must run AFTER prefill retrieval completes
+          setActivePanel_('pos');
+          show(viewIfOk); 
+          // Note: show('pos') calls applyPrefillToForm_()
+          normalizeViewport();
+          startInactivityTimer_();
+          showBanner('success', 'Signed in.');
+          if (__role === 'manager') { setTimeout(fetchAndRenderAnalytics_, 0); }
+          return true;
+        };
+
+        const staged = getStageId();
+        if (staged) {
+          // If staged ID exists, perform async redemption and WAIT for results
+          google.script.run
+            .withSuccessHandler(r => {
+              if (r && r.ok) {
+                setPrefill(r.memberId || '', r.mode || '');
+                // No need to call applyPrefillToForm_ here, show('pos') handles it.
+              }
+              clearStageId();
+              finalizer(); // Proceed only after redemption attempt finishes
+            })
+            .withFailureHandler(() => { 
+              clearStageId(); 
+              finalizer(); // Proceed even if redemption fails
+            })
+            .redeemPrefill(staged);
+            
+            // Return true immediately, the actual view update is deferred to the handlers.
+            return true; 
+        }
+
+        // Standard continuation path (No staged ID found / Session already active at boot)
+        return finalizer(); 
+
+      } else {
+        clearMsid();
+        stopInactivityTimer_();
+        show('signin');
+        return false;
+      }
+    });
+  }
+
+  // Inactivity timer
+  let countdownInterval = null;
+  function startInactivityTimer_() {
+    stopInactivityTimer_();
+
+    const timerEl = document.getElementById('session-timer');
+    let remaining = 60;
+
+    const updateUI = () => {
+      if (timerEl) timerEl.textContent = 'Session: ' + remaining + ' s remaining';
+    };
+
+    const reset = () => {
+      clearTimeout(inactivityTimer);
+      clearInterval(countdownInterval);
+      remaining = 60;
+      updateUI();
+
+      countdownInterval = setInterval(() => {
+        remaining--;
+        updateUI();
+        if (remaining <= 0) clearInterval(countdownInterval);
+      }, 1000);
+
+      inactivityTimer = setTimeout(() => {
+        const sid = getMsid();
+        if (!sid) {
+          clearMsid();
+          if (timerEl) timerEl.textContent = 'Session expired.';
+          show('signin');
+          return;
+        }
+        google.script.run.withSuccessHandler(() => {
+          clearMsid();
+          if (timerEl) timerEl.textContent = 'Session expired.';
+          document.getElementById('si-username').value = '';
+          document.getElementById('si-pin').value = '';
+          show('signin');
+        }).logoutMSession(sid);
+      }, 60 * 1000);
+    };
+
+    __inactResetHandler = reset;
+    ['click','keydown','mousemove','scroll','touchstart'].forEach(ev => {
+      document.addEventListener(ev, __inactResetHandler, { passive:true });
+    });
+    reset();
+  }
+  function stopInactivityTimer_() {
+    clearTimeout(inactivityTimer);
+    clearInterval(countdownInterval);
+    if (__inactResetHandler) {
+      ['click','keydown','mousemove','scroll','touchstart'].forEach(ev => {
+        document.removeEventListener(ev, __inactResetHandler);
+      });
+      __inactResetHandler = null;
+    }
+    const timerEl = document.getElementById('session-timer');
+    if (timerEl) timerEl.textContent = 'Session: —';
+    const m = document.getElementById('inact-msg'); if (m) m.textContent = '';
+  }
+
+  // Sign in
+  document.getElementById('form-signin').onsubmit = (e) => {
+    e.preventDefault();
+    const u = document.getElementById('si-username').value.trim().toLowerCase();
+    const p = document.getElementById('si-pin').value.trim();
+    const siMsg = document.getElementById('si-msg');
+    const siLock = document.getElementById('si-lock');
+    if (!/^[a-z0-9._]{3,32}$/.test(u)) { siMsg.textContent = 'Invalid username.'; return; }
+    if (!/^[0-9]{6}$/.test(p)) { siMsg.textContent = 'PIN must be 6 digits.'; return; }
+    siMsg.textContent = '';
+    siLock.textContent = '';
+
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res && res.ok && res.sid) {
+          setMsid(res.sid);
+          if (siLock) siLock.textContent = '';
+          clearSigninCountdown_();
+
+          if (res.mustChange === true) {
+            stopInactivityTimer_();
+            show('pinchange');
+            return;
+          }
+
+          // === MODIFIED BLOCK START (Pre-fill Redemption after Sign-in) ===
+          const staged = getStageId();
+          if (staged) {
+            google.script.run
+              .withSuccessHandler(r => {
+                if (r && r.ok) {
+                  // Set prefills. applyPrefillToForm will be called in show('pos')
+                  setPrefill(r.memberId || '', r.mode || ''); 
+                }
+                clearStageId();
+                // Proceed to POS, now with prefill set in session
+                requireMSessionThen('pos'); 
+              })
+              .withFailureHandler(() => { 
+                // Clear stage ID even on failure and proceed
+                clearStageId(); 
+                requireMSessionThen('pos'); 
+              })
+              .redeemPrefill(staged);
+          } else {
+             requireMSessionThen('pos'); // Original continuation if no stageId was staged
+          }
+          // === MODIFIED BLOCK END ===
+
+        } else {
+          siMsg.textContent = (res && res.msg) || 'Sign in failed.';
+          if (res && res.lock) {
+            const L = res.lock;
+            if (L.permanent) {
+              if (siLock) siLock.textContent = 'This account is blocked. Please contact your manager.';
+              clearSigninCountdown_();
+            } else if (L.locked) {
+              if (siLock) siLock.textContent = 'Too many attempts.';
+              if (typeof L.untilMs === 'number') startSigninCountdown_(Number(L.untilMs));
+              else clearSigninCountdown_();
+            } else {
+              if (typeof L.failCount === 'number') {
+                const fc = Number(L.failCount||0);
+                const tgt = Number(L.nextTarget||0);
+                if (fc > 0 && tgt > 0) siLock.textContent = `Attempts: ${fc} / ${tgt} before a cooldown`;
+                else if (fc > 0)      siLock.textContent = `Attempts: ${fc}`;
+                else                  siLock.textContent = '';
+              } else {
+                siLock.textContent = '';
+              }
+              clearSigninCountdown_();
+            }
+          } else {
+            if (siLock) siLock.textContent = '';
+            clearSigninCountdown_();
+          }
+        }
+      })
+      .withFailureHandler(err => {
+        siMsg.textContent = (err && err.message) ? err.message : 'Sign in failed.';
+        try { refreshSigninLockUi_(); } catch(_){}
+      })
+      .signinStaffAttempt(u, p);
+  };
+
+  // Live lock UI
+  (function wireUsernameWatcher_(){
+    const u = document.getElementById('si-username');
+    if (!u) return;
+    let t = null;
+    const kick = ()=>{
+      if (t) clearTimeout(t);
+      t = setTimeout(refreshSigninLockUi_, 200);
+    };
+    u.addEventListener('input', kick);
+    u.addEventListener('change', kick);
+  })();
+
+  // Enter on Amount submits
+  document.getElementById('amount').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      document.getElementById('form-pos').requestSubmit();
+    }
+  });
+  const rngSel = document.getElementById('analytics-range');
+  if (rngSel) rngSel.addEventListener('change', () => {
+    toggleCustomRangeUi_();
+    if (__role !== 'manager') return;
+    if (rngSel.value === 'custom') return;
+    fetchAndRenderAnalytics_();
+  });
+
+  const btnApply = document.getElementById('btn-apply-range');
+  if (btnApply) btnApply.addEventListener('click', () => {
+    if (__role !== 'manager') return;
+    const from = getDateInputValue_('analytics-from');
+    const to   = getDateInputValue_('analytics-to');
+    const msg = document.getElementById('analytics-msg');
+    if (msg) msg.textContent = '';
+    if (!from || !to) { if (msg) msg.textContent = 'Pick both From and To dates.'; return; }
+    fetchAndRenderAnalyticsCustom_(from, to);
+  });
+
+  // Analytics: chart toggle + CSV buttons
+  (function wireAnalyticsButtons_(){
+    const btnToggle = $('btn-toggle-chart');
+    if (btnToggle) {
+      btnToggle.onclick = () => {
+        __chartMode = (__chartMode === 'line') ? 'stacked' : 'line';
+        btnToggle.textContent = (__chartMode === 'line') ? 'Stacked Bars' : 'Line Chart';
+        if (__lastAnalyticsPayload) {
+          // Re-render only images, no new server calls
+          const subtitle = humanizeRange_(__lastAnalyticsPayload);
+          const imgTrend = $('analytics-chart');
+          if (imgTrend) {
+            imgTrend.src = makeChartUrl_(__lastAnalyticsPayload.series || [], 'Collect vs Redeem', subtitle);
+          }
+        }
+      };
+    }
+
+    const btnTop = $('btn-dl-top');
+    if (btnTop) {
+      btnTop.onclick = () => {
+        if (!__lastAnalyticsPayload || !(__lastAnalyticsPayload.topCustomers||[]).length) {
+          showToast('info', 'No Top Customers to export for this range.');
+          return;
+        }
+        exportTopCustomersCsv_(__lastAnalyticsPayload);
+      };
+    }
+
+    const btnRecent = $('btn-dl-recent');
+    if (btnRecent) {
+      btnRecent.onclick = () => {
+        if (!(__lastRecentRows||[]).length) {
+          showToast('info', 'No Recent Transactions to export for this range.');
+          return;
+        }
+        exportRecentTxCsv_(__lastRecentRows);
+      };
+    }
+  })();
+
+  // logout
+  function logoutNow_() {
+    const sid = getMsid();
+    google.script.run.withSuccessHandler(() => {
+      clearMsid();
+      stopInactivityTimer_();
+      __activeCampaignsCache = []; // optional hygiene
+      const vpc = document.getElementById('view-pinchange');
+      if (vpc) vpc.classList.add('hidden');
+      document.getElementById('si-username').value = '';
+      document.getElementById('si-pin').value = '';
+      show('signin');
+      showBanner('info', 'Logged out.');
+    }).logoutMSession(sid);
+  }
+  const btnLogoutPos = document.getElementById('btn-logout');
+  if (btnLogoutPos) btnLogoutPos.onclick = logoutNow_;
+  const btnLogoutAna = document.getElementById('btn-logout-ana');
+  if (btnLogoutAna) btnLogoutAna.onclick = logoutNow_;
+  const btnLogoutStaff = document.getElementById('btn-logout-staff');
+  if (btnLogoutStaff) btnLogoutStaff.onclick = logoutNow_;
+
+  // Tabs
+  document.getElementById('tab-pos').onclick = () => setActivePanel_('pos');
+
+  document.getElementById('tab-analytics').onclick = () => {
+    if (__role !== 'manager') return;
+    show('pos'); // Ensure we are on the main dashboard view
+    setTimeout(() => {
+      setActivePanel_('analytics');
+      fetchAndRenderAnalytics_();
+    }, 0);
+  };
+
+  document.getElementById('tab-campaigns').onclick = () => { // <--- CAMPAIGN TAB HANDLER
+    if (__role !== 'manager') return;
+    show('pos'); // Ensure we are on the main dashboard view
+    setTimeout(() => {
+      setActivePanel_('campaigns');
+      loadActiveCampaigns_();   // Load active campaigns on tab switch
+      loadCampaignRequests_();  // Load requests on tab switch
+    }, 0);
+  };
+
+  document.getElementById('tab-coupons').onclick = () => {
+    if (__role !== 'manager') return;
+    show('pos');
+    setTimeout(() => {
+      setActivePanel_('coupons');
+      loadMyCoupons_();
+      loadMyCouponRequests_(); // ← also load requests
+    }, 0);
+  };
+
+
+  const btnLogoutCoupons = document.getElementById('btn-logout-coupons');
+  if (btnLogoutCoupons) btnLogoutCoupons.onclick = logoutNow_;
+
+  document.getElementById('tab-staff').onclick = () => {
+    if (__role !== 'manager') return;
+    show('pos'); // Ensure we are on the main dashboard view
+    setTimeout(() => {
+      setActivePanel_('staff');
+      loadMyStaff_();
+    }, 0);
+  };
+
+  // --- Amount → Points conversion helpers ---
+  function toCents_(amountStr){
+    // Safe parse to cents (integer). NaN → 0.
+    const n = Number(String(amountStr||'').replace(',', '.'));
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.round(n * 100));
+  }
+  /**
+   * COLLECT: 1 point per $2 → 1 point per 200 cents (floor).
+   * REDEEM : 1 point equals $0.01 → points = cents (exact).
+   */
+  function computePointsFromAmount_(amountStr, mode){
+    const cents = toCents_(amountStr);
+    const m = String(mode||'').toUpperCase();
+    if (m === 'REDEEM') return cents;                // 1 point = 1 cent
+    return Math.floor(cents / 200);                  // 200 cents per point
+  }
+
+  /** Update the UI hint under the amount field */
+  function updateAmountHint_(){
+    const amtEl = document.getElementById('amount');
+    const modeEl = document.getElementById('mode');
+    const hintEl = document.getElementById('amount-hint');
+    if (!amtEl || !modeEl || !hintEl) return;
+
+    const mode = String(modeEl.value||'').toUpperCase();
+    const cents = toCents_(amtEl.value);
+    const pts = computePointsFromAmount_(amtEl.value, mode);
+
+    if (mode === 'COLLECT') {
+      // Show earned points
+      const earn = pts;
+      hintEl.textContent = `Collect: $2.00 = 1 point → amount = $${(cents/100).toFixed(2)} earns ${earn} point${earn===1?'':'s'}.`;
+    } else {
+      // Show cost in points (equals cents)
+      hintEl.textContent = `Redeem: 1 point = $0.01 → amount = $${(cents/100).toFixed(2)} costs ${pts} point${pts===1?'':'s'}.`;
+    }
+  }
+
+  // wire hint updates
+  (function wireAmountHint_(){
+    const amt = document.getElementById('amount');
+    const mode = document.getElementById('mode');
+    if (amt) {
+      amt.addEventListener('input', updateAmountHint_);
+      amt.addEventListener('change', updateAmountHint_);
+    }
+    if (mode) {
+      mode.addEventListener('change', updateAmountHint_);
+    }
+    // Run once at boot if inputs are already there
+    setTimeout(updateAmountHint_, 0);
+  })();
+
+  // POS submit (amount → points)
+  document.getElementById('form-pos').onsubmit = (e) => {
+    e.preventDefault();
+    const sid = getMsid();
+    const memberId = document.getElementById('member-id').value.trim().toUpperCase();
+    const amountStr = document.getElementById('amount').value.trim();
+    const mode = document.getElementById('mode').value;
+
+    setSectionMsg('pos-msg', '', '');
+
+    // Basic client validation
+    const cents = toCents_(amountStr);
+    if (cents <= 0) {
+      setSectionMsg('pos-msg', 'error', 'Enter a valid amount (greater than $0.00).');
+      return;
+    }
+
+    let points = computePointsFromAmount_(amountStr, mode);
+
+    if (mode === 'COLLECT') {
+      if (points <= 0) {
+        setSectionMsg('pos-msg', 'error', 'Purchase too small to earn points (min $2.00).');
+        return;
+      }
+    } else if (mode === 'REDEEM') {
+      if (points <= 0) {
+        setSectionMsg('pos-msg', 'error', 'Redemption amount must be at least $0.01.');
+        return;
+      }
+    } else {
+      setSectionMsg('pos-msg', 'error', 'Pick a valid mode.');
+      return;
+    }
+
+    // ✅ NEW: sanitize + validate coupon before sending
+    const couponRaw = (document.getElementById('coupon')?.value || '').trim();
+    const coupon = couponRaw ? couponRaw.toUpperCase() : '';
+    if (coupon && !/^[A-Z0-9._-]{3,32}$/.test(coupon)) {
+      setSectionMsg('pos-msg', 'error', 'Coupon code looks invalid.');
+      return;
+    }
+
+    // Optional: disable submit during request
+    const submitBtn = document.querySelector('#form-pos button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+
+    google.script.run
+      .withSuccessHandler(res => {
+        const what = (mode === 'COLLECT' ? 'Collected' : 'Redeemed');
+        const prettyAmt = (cents / 100).toFixed(2);
+        const note = (mode === 'COLLECT')
+          ? `${what}: $${prettyAmt} → ${points} point${points === 1 ? '' : 's'}.`
+          : `${what}: $${prettyAmt} (cost ${points} point${points === 1 ? '' : 's'}).`;
+        showToast('success', `${note} New balance: ${res.balance}`);
+
+        // reset inputs
+        document.getElementById('member-id').value = '';
+        document.getElementById('amount').value = '';
+        const ci = document.getElementById('coupon'); if (ci) ci.value = '';
+        document.getElementById('member-id').focus();
+        updateAmountHint_();
+        if (submitBtn) submitBtn.disabled = false;
+      })
+      .withFailureHandler(err => {
+        const t = (err && err.message) ? err.message : 'Error';
+        setSectionMsg('pos-msg', 'error', t);
+        showBanner('error', t);
+        if (submitBtn) submitBtn.disabled = false;
+      })
+      .submitCollectRedeem(sid, memberId, points, mode, coupon);
+  };
+
+  // Auto-uppercase coupon input while typing (optional)
+  (function forceCouponUpper_(){
+    const ci = document.getElementById('coupon');
+    if (!ci) return;
+    ci.addEventListener('input', () => {
+      const curStart = ci.selectionStart, curEnd = ci.selectionEnd;
+      ci.value = ci.value.toUpperCase();
+      try { ci.setSelectionRange(curStart, curEnd); } catch (_) {}
+    });
+  })();
+
+  (function forceCouponCodeUpper_(){
+    const ci = document.getElementById('cpn-code');
+    if (!ci) return;
+    ci.addEventListener('input', () => {
+      const s = [ci.selectionStart, ci.selectionEnd];
+      ci.value = ci.value.toUpperCase();
+      try { ci.setSelectionRange(s[0], s[1]); } catch(_) {}
+    });
+  })();
+
+
+  function getMsid_(){
+    const m = document.cookie.match(/(?:^|; )msid=([^;]*)/);
+    if (m && m[1]) return decodeURIComponent(m[1]);
+    try { return sessionStorage.getItem('msid') || ''; } catch(_) { return ''; }
+  }
+  function fmtInt_(n){ return Number(n||0).toLocaleString(); }
+  function fmtDateTime_(ms){
+    if (!ms) return '—';
+    const d = new Date(Number(ms));
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') +
+          ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function humanizeRange_(payload){
+    if (!payload) return '';
+    if (payload.range === 'today') return 'Today';
+    if (payload.range === '7d')    return 'Last 7 days';
+    if (payload.range === '30d')   return 'Last 30 days';
+    if (payload.range === 'custom') {
+      const fmt = (ms)=> {
+        const d = new Date(Number(ms||0));
+        const y = d.getFullYear();
+        const m = String(d.getMonth()+1).padStart(2,'0');
+        const dd = String(d.getDate()).padStart(2,'0');
+        return `${y}-${m}-${dd}`;
+      };
+      if (payload.startMs && payload.endMs) return `${fmt(payload.startMs)} → ${fmt(payload.endMs)}`;
+      return 'Custom range';
+    }
+    return 'Last 7 days';
+  }
+
+  function toCsv_(rows, headers){
+    const esc = (v) => {
+      const s = String(v ?? '');
+      if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+    const lines = [];
+    if (headers && headers.length) lines.push(headers.map(esc).join(','));
+    rows.forEach(r => lines.push(r.map(esc).join(',')));
+    return lines.join('\n');
+  }
+
+  function downloadCsv_(filename, csvString){
+    const uri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvString);
+    const a = document.createElement('a');
+    a.href = uri;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function exportTopCustomersCsv_(payload){
+    const top = (payload && payload.topCustomers) ? payload.topCustomers : [];
+    const headers = ['MemberId','Collected','Redeemed','Net'];
+    const rows = top.map(r => [r.memberId, r.totalCollect||0, r.totalRedeem||0, r.net||0]);
+    const csv = toCsv_(rows, headers);
+    downloadCsv_('top_customers.csv', csv);
+  }
+
+  function exportRecentTxCsv_(rows){
+    const headers = ['At','MemberId','Type','Points','Staff'];
+    const data = (rows||[]).map(r => [
+      fmtDateTime_(r.atMs),
+      r.memberId||'',
+      r.type||'',
+      Number(r.points||0),
+      r.staff||''
+    ]);
+    const csv = toCsv_(data, headers);
+    downloadCsv_('recent_transactions.csv', csv);
+  }
+
+  // manager reset staff
+  const fr = document.getElementById('form-reset-staff');
+  if (fr) fr.onsubmit = (e)=>{
+    e.preventDefault();
+    if (__role !== 'manager') return;
+
+    const uEl = document.getElementById('rstf-username');
+    const pEl = document.getElementById('rstf-temp');
+    const msg = document.getElementById('rstf-msg');
+    if (msg) msg.textContent = '';
+
+    const uname = (uEl?.value || '').trim().toLowerCase();
+    const temp  = (pEl?.value || '').trim();
+
+    if (!/^[a-z0-9._]{3,32}$/.test(uname)) { if (msg) msg.textContent = 'Enter a valid staff username.'; return; }
+    if (!/^[0-9]{6}$/.test(temp))          { if (msg) msg.textContent = 'Temporary PIN must be 6 digits.'; return; }
+
+    const sid = getMsid();
+    google.script.run
+      .withSuccessHandler(res=>{
+        if (msg) msg.style.color = '#0a0';
+        if (msg) msg.textContent = `Temporary PIN set for ${res.username}. Lockout cleared.`;
+        if (uEl) uEl.value = '';
+        if (pEl) pEl.value = '';
+        setTimeout(()=>{ if (msg){ msg.textContent=''; msg.style.color=''; } }, 2500);
+      })
+      .withFailureHandler(err=>{
+        if (msg) { msg.style.color = ''; msg.textContent = (err && err.message) || 'Could not reset PIN.'; }
+      })
+      .managerResetStaffPin(sid, uname, temp);
+  };
+
+  // forced first login pin change
+  document.getElementById('form-pinchange').onsubmit = (e)=>{
+    e.preventDefault();
+    const oldP = (document.getElementById('pc-old').value || '').trim();
+    const n1   = (document.getElementById('pc-new1').value || '').trim();
+    const n2   = (document.getElementById('pc-new2').value || '').trim();
+    const msg  = document.getElementById('pc-msg');
+    if (msg) msg.textContent = '';
+
+    if (!/^[0-9]{6}$/.test(oldP)) { if (msg) msg.textContent = 'Current PIN must be 6 digits.'; return; }
+    if (!/^[0-9]{6}$/.test(n1))   { if (msg) msg.textContent = 'New PIN must be 6 digits.'; return; }
+    if (n1 !== n2)                { if (msg) msg.textContent = 'New PINs do not match.'; return; }
+
+    const sid = getMsid();
+    google.script.run
+      .withSuccessHandler(()=> {
+        document.getElementById('pc-old').value = '';
+        document.getElementById('pc-new1').value = '';
+        document.getElementById('pc-new2').value = '';
+        const vpc = document.getElementById('view-pinchange');
+        if (vpc) vpc.classList.add('hidden');
+        requireMSessionThen('pos');
+      })
+      .withFailureHandler(err=>{
+        if (msg) msg.textContent = (err && err.message) || 'Could not change PIN.';
+      })
+      .staffChangePin(sid, oldP, n1);
+  };
+
+  const pcCancel = document.getElementById('pc-logout');
+  if (pcCancel) pcCancel.onclick = ()=>{
+    const sid = getMsid();
+    google.script.run.withSuccessHandler(()=>{
+      clearMsid();
+      stopInactivityTimer_();
+      const vpc = document.getElementById('view-pinchange');
+      if (vpc) vpc.classList.add('hidden');
+      document.getElementById('si-username').value = '';
+      document.getElementById('si-pin').value = '';
+      show('signin');
+    }).logoutMSession(sid);
+  };
+
+  // range helpers
+  function getDateInputValue_(id){
+    const el = document.getElementById(id);
+    const v = el ? el.value : '';
+    return v || '';
+  }
+  function toggleCustomRangeUi_(){
+    const sel = document.getElementById('analytics-range');
+    const wrap = document.getElementById('custom-range-wrap');
+    if (!sel || !wrap) return;
+    wrap.style.display = (sel.value === 'custom') ? '' : 'none';
+  }
+
+  // countdown helpers
+  let __siCountdownTimer = null;
+  function clearSigninCountdown_(){
+    if (__siCountdownTimer){ clearInterval(__siCountdownTimer); __siCountdownTimer = null; }
+    const c = document.getElementById('si-countdown');
+    if (c) c.textContent = '';
+  }
+  function fmtHms_(ms){
+    if (ms < 0) ms = 0;
+    const s = Math.floor(ms/1000);
+    const hh = Math.floor(s/3600);
+    const mm = Math.floor((s%3600)/60);
+    const ss = s%60;
+    if (hh > 0) return `${hh}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+    return `${mm}:${String(ss).padStart(2,'0')}`;
+  }
+  function startSigninCountdown_(untilMs){
+    clearSigninCountdown_();
+    const c = document.getElementById('si-countdown');
+    if (!c) return;
+    const tick = ()=>{
+      const left = untilMs - Date.now();
+      if (left <= 0){
+        clearSigninCountdown_();
+        c.textContent = '';
+        refreshSigninLockUi_();
+        return;
+      }
+      c.textContent = 'Locked — ' + fmtHms_(left) + ' remaining';
+    };
+    tick();
+    __siCountdownTimer = setInterval(tick, 1000);
+  }
+  function refreshSigninLockUi_(){
+    const el = document.getElementById('si-lock');
+    const u = (document.getElementById('si-username')?.value || '').trim().toLowerCase();
+    clearSigninCountdown_();
+    if (!el){ return; }
+    if (!u){ el.textContent = ''; return; }
+    google.script.run
+      .withSuccessHandler(function(info){
+        if (!info || !info.ok){ el.textContent = ''; return; }
+        if (info.permanent){
+          el.textContent = 'This account is blocked. Please contact your manager.';
+          return;
+        }
+        if (info.locked){
+          el.textContent = 'Too many attempts.';
+          if (typeof info.untilMs === 'number') startSigninCountdown_(Number(info.untilMs));
+          return;
+        }
+        const fc = Number(info.failCount||0);
+        const tgt = Number(info.nextTarget||0);
+        if (fc > 0 && tgt > 0){
+          el.textContent = `Attempts: ${fc} / ${tgt} before a cooldown`;
+        } else if (fc > 0) {
+          el.textContent = `Attempts: ${fc}`;
+        } else {
+          el.textContent = '';
+        }
+      })
+      .withFailureHandler(function(){ el.textContent=''; })
+      .getStaffLockInfo(u);
+  }
+
+  function makeChartUrl_(series, titleText, subtitleText){
+    const clamp = (arr, max) => (arr.length > max ? arr.slice(arr.length - max) : arr);
+    const labels  = clamp(series.map(s => s.day), 60);
+    const collect = clamp(series.map(s => Number(s.collect||0)), 60);
+    const redeem  = clamp(series.map(s => Number(s.redeem||0)), 60);
+
+    const isStacked = (__chartMode === 'stacked');
+
+    const cfg = isStacked ? {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Collect', data: collect },
+          { label: 'Redeem', data: redeem }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true },
+          title: { display: !!titleText, text: titleText || '' },
+          subtitle: { display: !!subtitleText, text: subtitleText || '' },
+          tooltip: { enabled: true }
+        },
+        scales: {
+          x: { stacked: true, ticks: { maxRotation: 0, autoSkip: true } },
+          y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    } : {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Collect', data: collect },
+          { label: 'Redeem', data: redeem }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true },
+          title: { display: !!titleText, text: titleText || '' },
+          subtitle: { display: !!subtitleText, text: subtitleText || '' },
+          tooltip: { enabled: true }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 } },
+          x: { ticks: { maxRotation: 0, autoSkip: true } }
+        }
+      }
+    };
+
+    const base = 'https://quickchart.io/chart';
+    const q = new URLSearchParams({
+      c: JSON.stringify(cfg),
+      width: '900',
+      height: '420',
+      devicePixelRatio: '2',
+      format: 'png'
+    }).toString();
+    return `${base}?${q}`;
+  }
+
+
+  function makeLeaderboardUrl_(topCustomers, titleText, subtitleText){
+    const trimLabel = (s) => {
+      s = String(s||'');
+      if (s.length <= 16) return s;
+      // keep "MBR-" prefix if present, mask middle
+      if (s.startsWith('MBR-')) return s.slice(0, 8) + '…' + s.slice(-4);
+      return s.slice(0, 12) + '…' + s.slice(-3);
+    };
+
+    const labels = (topCustomers||[]).map(r => trimLabel(r.memberId));
+    const collect = (topCustomers||[]).map(r => Number(r.totalCollect||0));
+    const redeem  = (topCustomers||[]).map(r => Number(r.totalRedeem||0));
+
+    const cfg = {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Collect', data: collect },
+          { label: 'Redeem', data: redeem }
+        ]
+      },
+      options: {
+        indexAxis: 'y', // horizontal bars
+        plugins: {
+          legend: { display: true },
+          title: { display: !!titleText, text: titleText || '' },
+          subtitle: { display: !!subtitleText, text: subtitleText || '' },
+          tooltip: { enabled: true }
+        },
+        scales: {
+          x: { beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    };
+
+    const base = 'https://quickchart.io/chart';
+    const q = new URLSearchParams({
+      c: JSON.stringify(cfg),
+      width: '900',
+      height: '420',
+      devicePixelRatio: '2',
+      format: 'png'
+    }).toString();
+    return `${base}?${q}`;
+  }
+
+  function renderAnalytics_(payload){
+    if (!payload) return;
+    __lastAnalyticsPayload = payload;  // keep for toggle + CSV
+
+    // KPIs
+    const t = payload.totals || {};
+    $('kpi-net').textContent     = fmtInt_(Number(t.netPoints||0));
+    $('kpi-collect').textContent = fmtInt_(Number(t.collectPoints||0));
+    $('kpi-redeem').textContent  = fmtInt_(Number(t.redeemPoints||0));
+    $('kpi-tx').textContent      = fmtInt_(Number(t.txCount||0));
+    $('kpi-uniq').textContent    = fmtInt_(Number(t.uniqueMembers||0));
+
+    // Titles/Subtitles
+    const subtitle = humanizeRange_(payload);
+
+    // Trend chart
+    const imgTrend = $('analytics-chart');
+    if (imgTrend) {
+      imgTrend.alt = `Trend: Collect vs Redeem (${subtitle})`;
+      imgTrend.onerror = () => showToast('error', 'Failed to load trend chart.');
+      imgTrend.src = makeChartUrl_(payload.series || [], 'Collect vs Redeem', subtitle);
+    }
+
+    // Leaderboard chart
+    const top = payload.topCustomers || [];
+    const lbImg = $('leaderboard-chart');
+    if (lbImg) {
+      if (top.length === 0) {
+        lbImg.removeAttribute('src');
+        lbImg.alt = 'Leaderboard: No data';
+        lbImg.style.display = 'none';
+      } else {
+        lbImg.style.display = '';
+        lbImg.alt = `Leaderboard: Top Customers (${subtitle})`;
+        lbImg.onerror = () => showToast('error', 'Failed to load leaderboard chart.');
+        lbImg.src = makeLeaderboardUrl_(top, 'Top Customers', subtitle);
+      }
+    }
+
+    // Leaderboard table
+    const tbTop = document.querySelector('#tbl-top tbody');
+    if (tbTop) {
+      tbTop.innerHTML = '';
+      if (top.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="4" style="color:#666; padding:6px;">No data in this range.</td>';
+        tbTop.appendChild(tr);
+      } else {
+        top.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML =
+            `<td>${row.memberId || ''}</td>` +
+            `<td class="num">${fmtInt_(row.totalCollect || 0)}</td>` +
+            `<td class="num">${fmtInt_(row.totalRedeem || 0)}</td>` +
+            `<td class="num">${fmtInt_((row.net || 0))}</td>`;
+          tbTop.appendChild(tr);
+        });
+      }
+    }
+
+    // Recent TX (and capture for CSV)
+    const msid = getMsid_();
+    google.script.run
+      .withSuccessHandler(rows => {
+        __lastRecentRows = rows || [];
+        const tb = document.querySelector('#tbl-recent tbody');
+        if (!tb) return;
+        tb.innerHTML = '';
+        __lastRecentRows.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.innerHTML =
+            `<td>${fmtDateTime_(r.atMs)}</td>` +
+            `<td>${r.memberId||''}</td>` +
+            `<td>${r.type||''}</td>` +
+            `<td class="num">${fmtInt_(r.points)}</td>` +
+            `<td>${r.staff||''}</td>`;
+          tb.appendChild(tr);
+        });
+      })
+      .withFailureHandler(err => {
+        const m = $('analytics-msg');
+        if (m) m.textContent = (err && err.message) ? err.message : 'Error loading recent transactions.';
+      })
+      .getRecentTx(msid, 20);
+  }
+
+
+
+  function fetchAndRenderAnalytics_(){
+    if (document.getElementById('analytics-range')?.value === 'custom') return;
+    if (__role !== 'manager') return;
+    const msid = getMsid_();
+    const rng = document.getElementById('analytics-range')?.value || '7d';
+    const msg = document.getElementById('analytics-msg');
+    if (msg) msg.textContent = '';
+
+    google.script.run
+      .withSuccessHandler(function(v){
+        if (!(v && v.ok)) { if (msg) msg.textContent = 'Session expired. Please sign in again.'; show('signin'); return; }
+        google.script.run
+          .withSuccessHandler(res => { renderAnalytics_(res); enableAutoLabeling_(); })
+          .withFailureHandler(err => { if (msg) msg.textContent = (err && err.message) || 'Error'; })
+          .getMerchantStats(msid, rng);
+      })
+      .withFailureHandler(() => { if (msg) msg.textContent = 'Failed to validate session.'; })
+      .validateMSession(msid);
+  }
+
+  function fetchAndRenderAnalyticsCustom_(fromIso, toIso){
+    const msid = getMsid_();
+    const msg = document.getElementById('analytics-msg');
+    if (msg) msg.textContent = '';
+
+    google.script.run
+      .withSuccessHandler(function(v){
+        if (!(v && v.ok)) { if (msg) msg.textContent = 'Session expired. Please sign in again.'; show('signin'); return; }
+
+        google.script.run
+          .withSuccessHandler(res => {
+            renderAnalytics_(res);
+            enableAutoLabeling_();
+
+            google.script.run
+              .withSuccessHandler(rows => {
+                __lastRecentRows = rows || [];
+                const tb = document.querySelector('#tbl-recent tbody');
+                if (!tb) return;
+                tb.innerHTML = '';
+                __lastRecentRows.forEach(r => {
+                  const tr = document.createElement('tr');
+                  tr.innerHTML =
+                    `<td>${fmtDateTime_(r.atMs)}</td>` +
+                    `<td>${r.memberId||''}</td>` +
+                    `<td>${r.type||''}</td>` +
+                    `<td class="num">${fmtInt_(r.points)}</td>` +
+                    `<td>${r.staff||''}</td>`;
+                  tb.appendChild(tr);
+                });
+                enableAutoLabeling_();
+              })
+              .withFailureHandler(err => { if (msg) msg.textContent = (err && err.message) || 'Error loading recent transactions.'; })
+              .getRecentTxRange(msid, fromIso, toIso, 20);
+          })
+          .withFailureHandler(err => { if (msg) msg.textContent = (err && err.message) || 'Error'; })
+          .getMerchantStatsRange(msid, fromIso, toIso);
+      })
+      .withFailureHandler(() => { if (msg) msg.textContent = 'Failed to validate session.'; })
+      .validateMSession(msid);
+  }
+
+  // staff list
+  function loadMyStaff_() {
+    const sid = getMsid();
+    const msg = document.getElementById('staff-msg');
+    if (msg) msg.textContent = 'Loading staff...';
+    google.script.run
+      .withSuccessHandler(renderMyStaff_)
+      .withFailureHandler(err => {
+        if (msg) msg.textContent = (err && err.message) || 'Error loading staff.';
+      })
+      .managerListMyStaff(sid);
+  }
+  function renderMyStaff_(rows) {
+    const tb = document.getElementById('tbl-staff').querySelector('tbody');
+    const msg = document.getElementById('staff-msg');
+    if (!tb) return;
+    tb.innerHTML = '';
+
+    if (!rows || rows.length === 0) {
+      if (msg) msg.textContent = 'No staff found for this merchant.';
+      return;
+    }
+    if (msg) msg.textContent = '';
+
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.username}</td>
+        <td>${r.role}</td>
+        <td>${r.active ? 'Yes' : 'No'}</td>
+        <td>
+          <button class="btn-staff-active" data-u="${r.username}" data-a="${r.active ? '0' : '1'}">
+            ${r.active ? 'Deactivate' : 'Activate'}
+          </button>
+        </td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    tb.querySelectorAll('.btn-staff-active').forEach(btn => {
+      btn.onclick = () => {
+        const sid = getMsid();
+        const u = btn.getAttribute('data-u');
+        const a = btn.getAttribute('data-a') === '1';
+        if (msg) msg.textContent = '';
+
+        if (!confirm(`Are you sure you want to ${a ? 'Activate' : 'Deactivate'} staff: ${u}?`)) return;
+
+        google.script.run
+          .withSuccessHandler(() => { loadMyStaff_(); })
+          .withFailureHandler(err => {
+            if (msg) msg.textContent = (err && err.message) || 'Error.';
+          })
+          .managerSetStaffActive(sid, u, a);
+      };
+    });
+    enableAutoLabeling_();
+  }
+
+  // Coupons UI (manager)
+  (function wireCouponsUi_(){
+    const btnLoad = document.getElementById('btn-load-coupons');
+    if (btnLoad) btnLoad.onclick = loadMyCoupons_;
+
+    // Hide the upsert CTA & form entirely when requests-only
+    const toggleBtn = document.getElementById('btn-toggle-coupon-form');
+    const form = document.getElementById('form-upsert-coupon');
+
+    if (REQUESTS_ONLY_COUPONS) {
+      if (toggleBtn) toggleBtn.style.display = 'none';
+      if (form)      form.classList.add('hidden');
+
+      // If someone somehow submits, show a friendly message
+      if (form) form.onsubmit = (e)=>{
+        e.preventDefault();
+        setSectionMsg('coupon-msg', 'info',
+          'Direct coupon edits are disabled. Please use “Coupon Requests” below.');
+      };
+      const cancel = document.getElementById('btn-cpn-cancel');
+      if (cancel) cancel.onclick = ()=> { if (form) { form.reset(); form.classList.add('hidden'); } };
+      return;
+    }
+
+    // (legacy path when direct edits are allowed)
+    if (form) form.onsubmit = (e)=>{
+      e.preventDefault();
+      if (__role !== 'manager') return;
+      const sid = getMsid();
+      const code = (document.getElementById('cpn-code')?.value || '').trim().toUpperCase();
+      const mode = (document.getElementById('cpn-mode')?.value || '').trim().toUpperCase();
+      const type = (document.getElementById('cpn-type')?.value || '').trim().toUpperCase();
+      const value = Number((document.getElementById('cpn-value')?.value || '0'));
+      const maxUses = Number((document.getElementById('cpn-max')?.value || '0'));
+      const perMember = Number((document.getElementById('cpn-pm')?.value || '0'));
+      const startStr = (document.getElementById('cpn-start')?.value || '').trim();
+      const endStr   = (document.getElementById('cpn-exp')?.value   || '').trim();
+      const startIso = startStr ? (startStr + 'T00:00:00Z') : '';
+      const endIso   = endStr   ? (endStr   + 'T23:59:59Z') : '';
+      const notes = (document.getElementById('cpn-notes')?.value || '').trim();
+      const msg = document.getElementById('coupon-msg'); if (msg) msg.textContent = '';
+
+      google.script.run
+        .withSuccessHandler(()=>{
+          showToast('success', 'Coupon saved.');
+          loadMyCoupons_();
+          form.reset();
+        })
+        .withFailureHandler(err=>{ if (msg) msg.textContent = (err && err.message) || 'Could not save coupon.'; })
+        .managerUpsertCoupon(sid, code, mode, type, value, { maxUses, perMemberLimit: perMember }, { startIso, endIso }, notes);
+    };
+
+    if (toggleBtn) toggleBtn.onclick = () => {
+      if (!form) return;
+      form.classList.toggle('hidden');
+    };
+    const btnCpnCancel = document.getElementById('btn-cpn-cancel');
+    if (btnCpnCancel) btnCpnCancel.onclick = () => {
+      if (form) { form.reset(); form.classList.add('hidden'); }
+    };
+  })();
+
+
+  function loadMyCoupons_(){
+    if (__role !== 'manager') return;
+    const sid = getMsid();
+    const msg = document.getElementById('coupon-msg'); if (msg) msg.textContent = 'Loading coupons...';
+    google.script.run
+      .withSuccessHandler(renderMyCoupons_)
+      .withFailureHandler(err=>{ if (msg) msg.textContent = (err && err.message) || 'Error loading coupons.'; })
+      .managerListMyCoupons(sid);
+  }
+
+  function renderMyCoupons_(rows){
+    const tb = document.querySelector('#tbl-coupons tbody');
+    const msg = document.getElementById('coupon-msg');
+    if (!tb) return;
+    tb.innerHTML = '';
+    if (!rows || rows.length === 0){
+      if (msg) msg.textContent = 'No coupons yet.';
+      return;
+    }
+    if (msg) msg.textContent = '';
+
+    rows.forEach(r=>{
+      const fmtIso = (s)=> s ? toDateInputValue_(s) : '';
+      const hasWin = (r.startIso||'') || (r.endIso||'');
+      const win = hasWin ? `${fmtIso(r.startIso||'')} → ${fmtIso(r.endIso||'')}` : '—';
+      const actionsCell = REQUESTS_ONLY_COUPONS
+        ? '—'
+        : `<button class="btn-cpn-toggle" data-c="${r.code}" data-a="${r.active ? '0' : '1'}">
+            ${r.active ? 'Deactivate' : 'Activate'}
+          </button>`;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.code}</td>
+        <td>${r.mode || '(both)'}</td>
+        <td>${r.type}</td>
+        <td class="num">${fmtInt_(r.value)}</td>
+        <td class="num">${fmtInt_(r.usedCount)}</td>
+        <td class="num">${fmtInt_(r.maxUses)}</td>
+        <td class="num">${fmtInt_(r.perMemberLimit)}</td>
+        <td>${r.active ? 'Yes' : 'No'}</td>
+        <td>${win}</td>
+        <td>${actionsCell}</td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    if (!REQUESTS_ONLY_COUPONS) {
+      tb.querySelectorAll('.btn-cpn-toggle').forEach(btn=>{
+        btn.onclick = ()=>{
+          const sid = getMsid();
+          const code = btn.getAttribute('data-c');
+          const a = btn.getAttribute('data-a') === '1';
+          google.script.run
+            .withSuccessHandler(()=> loadMyCoupons_())
+            .withFailureHandler(err=>{ const m = document.getElementById('coupon-msg'); if (m) m.textContent = (err && err.message) || 'Error.'; })
+            .managerSetCouponActive(sid, code, a);
+        };
+      });
+    } else {
+      // Friendly nudge, only once per visit
+      if (!renderMyCoupons_.__notified) {
+        showBanner('info', 'Direct coupon activation/deactivation is disabled. Use “Coupon Requests” below.', { scroll:false, persist:true });
+        renderMyCoupons_.__notified = true;
+      }
+    }
+
+    enableAutoLabeling_();
+  }
+
+
+  // Coupon Requests UI
+  (function wireCouponRequestsUi_(){
+    const btnLoad = $('btn-load-cpnreq');
+    const btnToggle = $('btn-toggle-cpnreq-form');
+    const form = $('form-cpnreq');
+    const msgEl = $('coupon-msg');
+
+    if (btnLoad) btnLoad.onclick = loadMyCouponRequests_;
+    if (btnToggle) btnToggle.onclick = ()=> form && form.classList.toggle('hidden');
+    const btnCancel = $('btn-rq-cancel');
+    if (btnCancel) btnCancel.onclick = ()=> form && (form.reset(), form.classList.add('hidden'));
+
+    if (form) form.onsubmit = (e)=>{
+      e.preventDefault();
+      if (__role !== 'manager') return;
+      const sid = getMsid();
+      const payload = {
+        code: $('rq-code').value.trim(),
+        mode: $('rq-mode').value.trim(),
+        type: $('rq-type').value.trim(),
+        value: Number($('rq-value').value || 0),
+        maxUses: Number($('rq-max').value || 0),
+        perMemberLimit: Number($('rq-pm').value || 0),
+        startIso: ($('rq-start').value || '').trim(),
+        endIso:   ($('rq-end').value   || '').trim(),
+        notes: $('rq-notes').value.trim()
+      };
+      google.script.run
+        .withSuccessHandler(()=>{ showToast('success','Coupon request submitted.'); form.reset(); form.classList.add('hidden'); loadMyCouponRequests_(); })
+        .withFailureHandler(err=>{ if (msgEl) msgEl.textContent = (err && err.message) || 'Could not submit coupon request.'; })
+        .managerCreateCouponRequest(sid, payload);
+    };
+  })();
+
+  function loadMyCouponRequests_(){
+    if (__role !== 'manager') return;
+    const sid = getMsid();
+    const msg = $('coupon-msg'); if (msg) msg.textContent = 'Loading coupon requests...';
+    google.script.run
+      .withSuccessHandler(renderMyCouponRequests_)
+      .withFailureHandler(err=>{ if (msg) msg.textContent = (err && err.message) || 'Error loading coupon requests.'; })
+      .managerListMyCouponRequests(sid);
+  }
+
+  function renderMyCouponRequests_(rows){
+    const tb = document.querySelector('#tbl-cpnreq tbody');
+    const msg = $('coupon-msg');
+    if (!tb) return;
+    tb.innerHTML = '';
+    if (!rows || !rows.length){ if (msg) msg.textContent = 'No coupon requests yet.'; return; }
+    if (msg) msg.textContent = '';
+
+    rows.forEach(r=>{
+      const wnd = (r.startIso||r.endIso) ? `${(r.startIso||'').split('T')[0]} → ${(r.endIso||'').split('T')[0]}` : '—';
+      const pending = (String(r.status||'').toLowerCase() === 'pending');
+      const actions = pending
+        ? `<button class="btn-rq-edit" data-id="${r.requestId}">Edit</button>
+          <button class="btn-rq-cancel" data-id="${r.requestId}" style="background:#fee2e2;color:#991b1b;">Cancel</button>`
+        : '—';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.requestId}</td>
+        <td>${r.code}</td>
+        <td>${r.mode||'(both)'} / ${r.type}</td>
+        <td class="num">${fmtInt_(r.value)}</td>
+        <td>${wnd}</td>
+        <td>${r.status}</td>
+        <td>${actions}</td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    tb.querySelectorAll('.btn-rq-cancel').forEach(btn=>{
+      btn.onclick = ()=>{
+        const id = btn.getAttribute('data-id'); if (!id) return;
+        if (!confirm(`Cancel coupon request ${id}?`)) return;
+        google.script.run
+          .withSuccessHandler(()=> loadMyCouponRequests_())
+          .withFailureHandler(err=>{ const m=$('coupon-msg'); if (m) m.textContent=(err&&err.message)||'Cancel failed.'; })
+          .managerCancelCouponRequest(getMsid(), id);
+      };
+    });
+
+    tb.querySelectorAll('.btn-rq-edit').forEach(btn=>{
+      btn.onclick = ()=>{
+        // Minimal: re-open form prefilled
+        const id = btn.getAttribute('data-id');
+        const r = (rows||[]).find(x=>x.requestId===id); if (!r) return;
+        const f = $('form-cpnreq'); if (!f) return;
+        f.classList.remove('hidden');
+        $('rq-code').value = r.code||'';
+        $('rq-mode').value = r.mode||'';
+        $('rq-type').value = r.type||'';
+        $('rq-value').value = r.value||0;
+        $('rq-max').value = r.maxUses||0;
+        $('rq-pm').value = r.perMemberLimit||0;
+        $('rq-start').value = (r.startIso||'').split('T')[0] || '';
+        $('rq-end').value   = (r.endIso||'').split('T')[0] || '';
+        $('rq-notes').value = r.notes||'';
+        // On submit, we’ll call update instead of create:
+        const origSubmit = f.onsubmit;
+        f.onsubmit = (e)=>{
+          e.preventDefault();
+          const payload = {
+            code: $('rq-code').value.trim(),
+            mode: $('rq-mode').value.trim(),
+            type: $('rq-type').value.trim(),
+            value: Number($('rq-value').value||0),
+            maxUses: Number($('rq-max').value||0),
+            perMemberLimit: Number($('rq-pm').value||0),
+            startIso: ($('rq-start').value||'').trim(),
+            endIso:   ($('rq-end').value||'').trim(),
+            notes: $('rq-notes').value.trim()
+          };
+          google.script.run
+            .withSuccessHandler(()=>{ showToast('success','Coupon request updated.'); f.reset(); f.classList.add('hidden'); loadMyCouponRequests_(); f.onsubmit = origSubmit; })
+            .withFailureHandler(err=>{ const m=$('coupon-msg'); if (m) m.textContent=(err&&err.message)||'Update failed.'; })
+            .managerUpdateCouponRequest(getMsid(), id, payload);
+        };
+      };
+    });
+
+    enableAutoLabeling_();
+  }
+
+// ───────────────────────────────── Multiplier Campaign UI (Manager) ─────────────────────────────────
+
+// --- Active Campaigns (Read Only) ---
+
+function loadActiveCampaigns_() {
+    if (__role !== 'manager') return;
+    const sid = getMsid();
+    const msg = document.getElementById('campaign-msg'); 
+    if (msg) msg.textContent = 'Loading active campaigns...';
+    
+    google.script.run
+        .withSuccessHandler(renderActiveCampaigns_)
+        .withFailureHandler(err => { 
+            if (msg) msg.textContent = 'Error loading active campaigns: ' + (err && err.message); 
+        })
+        .merchantListCampaigns(sid);
+}
+
+  function renderActiveCampaigns_(rows) {
+    __activeCampaignsCache = Array.isArray(rows) ? rows.slice() : []; // NEW
+    const tbl = document.getElementById('tbl-active-campaigns');
+    const tb = tbl.querySelector('tbody');
+    const msg = document.getElementById('campaign-msg');
+    
+    if (!tb) return;
+    tb.innerHTML = '';
+    
+    if (!rows || rows.length === 0) {
+        if (msg) msg.textContent = 'No active campaigns found.';
+        return;
+    }
+    if (msg) msg.textContent = '';
+    
+    (rows||[]).forEach(r => {
+        const tr = document.createElement('tr');
+        const window = `${r.startIso || '—'} → ${r.endIso || '—'}`;
+        
+        tr.innerHTML = `
+            <td>${r.campaignId}</td>
+            <td>${r.title}</td>
+            <td class="num">x${Number(r.multiplier).toFixed(2)}</td>
+            <td>${window}</td>
+            <td class="num">${fmtInt_(r.maxRedemptions)}</td>
+        `;
+        tb.appendChild(tr);
+    });
+
+    enableAutoLabeling_();
+  }
+
+  // --- Campaign Requests (Editable) ---
+
+  function loadCampaignRequests_() {
+      if (__role !== 'manager') return;
+      const sid = getMsid();
+      const msg = document.getElementById('campaign-msg');
+      if (msg) msg.textContent = 'Loading requests...';
+
+      google.script.run
+          .withSuccessHandler(renderCampaignRequests_)
+          .withFailureHandler(err => { 
+              if (msg) msg.textContent = 'Error loading requests: ' + (err && err.message); 
+          })
+          .merchantListCampaignRequests(sid);
+  }
+
+  function renderCampaignRequests_(rows) {
+    __requestCache = Array.isArray(rows) ? rows.slice() : []; // NEW: keep cache used by findRequestInCache_
+    const tbl = document.getElementById('tbl-campaign-requests');
+      const tb = tbl.querySelector('tbody');
+      const msg = document.getElementById('campaign-msg');
+      if (!tb) return;
+      tb.innerHTML = '';
+
+      if (!rows || rows.length === 0) {
+          if (msg) msg.textContent = 'No past or pending requests found.';
+          return;
+      }
+      if (msg) msg.textContent = `${rows.length} request(s) found.`;
+
+      (rows||[]).forEach(r => {
+          const tr = document.createElement('tr');
+          const isPending = r.status.toLowerCase() === 'pending';
+          const isFinal = r.status.toLowerCase() !== 'pending' && r.status.toLowerCase() !== 'cancelled';
+          const window = `${(r.startIso||'').split('T')[0]} → ${(r.endIso||'').split('T')[0]}`;
+          const titleLine = `${r.title || '—'} (x${Number(r.multiplier).toFixed(1)})`;
+          const statusLine = `<b style="color: ${isPending?'#f97316':(r.status==='approved'?'#10b981':'#ef4444')}">${r.status.toUpperCase()}</b><br>${r.statusNote || '—'}`;
+
+          let actions = '—';
+          if (isPending) {
+              actions = `
+                  <button class="btn-req-edit" data-id="${r.requestId}">Edit</button>
+                  <button class="btn-req-cancel" data-id="${r.requestId}" style="background:#fee2e2; color:#991b1b;">Cancel</button>
+              `;
+          } else if (r.type !== 'deactivate' && r.status === 'approved') {
+              actions = `<button class="btn-req-renew" data-id="${r.linkedCampaignId}" data-title="${r.title}">Renew</button>`;
+          }
+          
+          tr.innerHTML = `
+              <td>${r.requestId}</td>
+              <td>${r.type}</td>
+              <td>${titleLine}</td>
+              <td>${window}</td>
+              <td>${statusLine}</td>
+              <td>${actions}</td>
+          `;
+          tb.appendChild(tr);
+      });
+
+      wireRequestTableButtons_();
+      enableAutoLabeling_();
+  }
+
+  function wireRequestTableButtons_() {
+      const table = document.getElementById('tbl-campaign-requests');
+      if (!table) return;
+      
+      // Wire Edit Button
+      table.querySelectorAll('.btn-req-edit').forEach(btn => {
+          btn.onclick = () => {
+              const requestId = btn.getAttribute('data-id');
+              const req = findRequestInCache_(requestId);
+              if (!req) { showToast('error', 'Request not found.'); return; }
+              openRequestForm_('edit', req);
+          };
+      });
+
+      // Wire Cancel Button
+      table.querySelectorAll('.btn-req-cancel').forEach(btn => {
+          btn.onclick = () => {
+              const requestId = btn.getAttribute('data-id');
+              if (!confirm(`Are you sure you want to CANCEL request ${requestId}? This action cannot be undone.`)) return;
+              
+              const sid = getMsid();
+              google.script.run
+                  .withSuccessHandler(() => { showToast('success', 'Request cancelled.'); loadCampaignRequests_(); })
+                  .withFailureHandler(err => showToast('error', (err && err.message) || 'Cancel failed.'))
+                  .merchantCancelCampaignRequest(sid, requestId);
+          };
+      });
+
+      // Wire Renew Button
+      table.querySelectorAll('.btn-req-renew').forEach(btn => {
+          btn.onclick = () => {
+              const campaignId = btn.getAttribute('data-id');
+              const campaignTitle = btn.getAttribute('data-title');
+              // This pulls the live campaign data from the read-only list for renewal pre-fill
+              const liveCampaign = findLiveCampaignInCache_(campaignId);
+              
+              if (!liveCampaign) { showToast('error', 'Live campaign data not found for renewal pre-fill.'); return; }
+              openRequestForm_('renew', liveCampaign); // Use live object data to seed the form
+          };
+      });
+  }
+
+  // Enforce what can be edited depending on whether the campaign already started
+  function enforceEditingRules_(campaignLikeObj) {
+    const now = Date.now();
+    const startMs = campaignLikeObj && campaignLikeObj.startIso ? Date.parse(campaignLikeObj.startIso) : 0;
+    const started = !!(startMs && startMs < now);
+
+    const lock = (id, yes) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.disabled = !!yes;
+      if (yes) el.classList.add('muted');
+      else el.classList.remove('muted');
+    };
+
+    // Fields that are freely editable BEFORE the campaign starts
+    const editableBeforeStart = [
+      'req-title',
+      'req-multiplier',
+      'req-minspend',
+      'req-max-redemptions',
+      'req-permem-reds',   // ← NEW: keep editable before start
+      'req-budget-cap',
+      'req-start',
+      'req-end',
+      'req-notes',
+      'req-pm-cap'
+    ];
+
+    if (!started) {
+      editableBeforeStart.forEach(id => lock(id, false));
+
+      // Also set reasonable mins for dates (optional)
+      const sEl = document.getElementById('req-start');
+      const eEl = document.getElementById('req-end');
+      if (sEl && campaignLikeObj.startIso) sEl.min = campaignLikeObj.startIso.split('T')[0];
+      if (eEl) {
+        const minDate = (sEl?.value || campaignLikeObj.startIso || '').split('T')[0] || '';
+        if (minDate) eEl.min = minDate;
+      }
+      return;
+    }
+
+    // AFTER start: lock everything except extending END date
+    [
+      'req-title',
+      'req-multiplier',
+      'req-minspend',
+      'req-max-redemptions',
+      'req-permem-reds',   // ← NEW: lock after start (cannot tighten/loosen mid-flight)
+      'req-budget-cap',
+      'req-start',
+      'req-notes',
+      'req-pm-cap'
+    ].forEach(id => lock(id, true));
+
+    // End date can still be extended
+    lock('req-end', false);
+
+    const eEl = document.getElementById('req-end');
+    if (eEl && campaignLikeObj.endIso) {
+      const minEnd = campaignLikeObj.endIso.split('T')[0];
+      eEl.min = minEnd;
+      eEl.addEventListener('change', () => {
+        if (eEl.value && eEl.value < minEnd) eEl.value = minEnd;
+      }, { once: true });
+    }
+  }
+
+
+  // Normalize anything (Date | number | 'YYYY-MM-DD' | ISO string) to 'YYYY-MM-DD' for <input type="date">
+  function toDateInputValue_(v) {
+    if (v == null || v === '') return '';
+    // If it's already yyyy-mm-dd, keep it
+    if (typeof v === 'string') {
+      const s = v.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      // ISO → take date part before 'T'
+      const ms = Date.parse(s);
+      if (!isNaN(ms)) {
+        const d = new Date(ms);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${dd}`;
+      }
+      // last resort: strip time if present
+      if (s.includes('T')) return s.split('T')[0];
+      return s;
+    }
+    // number (ms) or Date
+    const d = (v instanceof Date) ? v : new Date(Number(v));
+    if (isNaN(d)) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  }
+
+
+  // --- Request Form Logic ---
+
+  let __requestCache = [];
+  // Helper to manage cache and pre-fill form fields easily
+  function findRequestInCache_(id) {
+      if (!__requestCache.length) return null;
+      return __requestCache.find(r => r.requestId === id) || null;
+  }
+  function findLiveCampaignInCache_(id) {
+      const cid = String(id || '').trim();
+      if (!cid) return null;
+      return (__activeCampaignsCache || []).find(c => String(c.campaignId) === cid) || null;
+  }
+
+
+
+  function openRequestForm_(mode, data = {}) {
+      const form = document.getElementById('form-campaign-request');
+      const titleEl = document.getElementById('req-form-title');
+      if (!form || !titleEl) return;
+      
+      form.classList.remove('hidden');
+      form.reset(); // Always clear the form first
+
+      titleEl.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+      document.getElementById('req-is-new').value = mode === 'new' ? 'true' : 'false';
+      document.getElementById('req-type').value = mode;
+      document.getElementById('req-id').value = mode !== 'new' ? data.requestId || '' : '';
+      document.getElementById('req-source-id').value = data.linkedCampaignId || data.campaignId || ''; // Source for Edit/Renew/Deactivate
+
+      // Fill fields based on mode/data
+      if (mode === 'edit' || mode === 'renew' || mode === 'new') {
+          document.getElementById('req-title').value = data.title || '';
+          document.getElementById('req-multiplier').value = data.multiplier || 2;
+          document.getElementById('req-minspend').value = data.minSpend || 0;
+          document.getElementById('req-max-redemptions').value = data.maxRedemptions || 0;
+          document.getElementById('req-budget-cap').value = data.budgetCap || 0;
+          document.getElementById('req-notes').value = data.notes || data.statusNote || '';
+
+          // Dates for Renew/Edit (robust)
+          const startDate = toDateInputValue_(data.startIso);
+          const endDate   = toDateInputValue_(data.endIso);
+          if (mode === 'renew') {
+            $('req-start').value = ''; // Force new dates for renew
+            $('req-end').value   = '';
+          } else {
+            $('req-start').value = startDate;
+            $('req-end').value   = endDate;
+
+            // NEW: per-member redemptions for edit/renew/new
+            $('req-permem-reds').value = Number(data.perMemberRedemptions || 0);            
+          }
+          // Deactivate removes non-essential fields (not implemented here, relies on required attribute)
+      }
+      
+      // Hide fields not needed for Deactivate
+      const hideElements = (hide) => {
+          document.getElementById('req-title').required = !hide;
+          document.getElementById('req-multiplier').required = !hide;
+          // ... (etc. for other fields that are optional for deactivate)
+      };
+      
+      hideElements(mode === 'deactivate');
+      enforceEditingRules_(data || {});
+      __reqBaseline = getRequestFormSnapshot_();
+      startWatchingFormChanges_();
+      setSubmitEnabled_(false);
+            
+      document.getElementById('campaign-msg').textContent = `Editing Request ${data.requestId || 'NEW'}`;
+      form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  // Show the active campaign selector for non-new types and prefill when selected
+  (function wireRequestTypeAndSelector_(){
+    const typeSel = $('req-type');
+    const wrap = $('req-campaign-wrap');
+    const sel = $('req-campaign-select');
+
+    function rebuildOptions_(){
+      if (!sel) return;
+      sel.innerHTML = '';
+      const opts = __activeCampaignsCache.map(c => {
+        const o = document.createElement('option');
+        o.value = c.campaignId;
+        const wnd = `${(c.startIso||'').split('T')[0]} → ${(c.endIso||'').split('T')[0]}`;
+        o.textContent = `${c.title} (x${Number(c.multiplier||1)}) — ${wnd}`;
+        return o;
+      });
+      if (opts.length === 0) {
+        const o = document.createElement('option');
+        o.value = '';
+        o.textContent = '(no active campaigns)';
+        sel.appendChild(o);
+      } else {
+        opts.forEach(o => sel.appendChild(o));
+      }
+    }
+    function applyFromSelected_(){
+      const id = sel && sel.value;
+      if (!id) return;
+      const c = (__activeCampaignsCache||[]).find(x => String(x.campaignId) === String(id));
+      if (!c) return;
+
+      // Prefill EVERYTHING we have in the form
+      $('req-source-id').value        = c.campaignId;
+      $('req-title').value            = c.title || '';
+      $('req-multiplier').value       = Number(c.multiplier || 1);
+      $('req-minspend').value         = Number(c.minSpend || 0);
+      $('req-max-redemptions').value  = Number(c.maxRedemptions || 0);
+      $('req-budget-cap').value       = Number(c.budgetCap || 0);
+      $('req-notes').value            = '';
+      $('req-start').value            = toDateInputValue_(c.startIso);
+      $('req-end').value              = toDateInputValue_(c.endIso);
+
+      // NEW: per-member redemptions (place BEFORE baseline capture)
+      const pmr = $('req-permem-reds');
+      if (pmr) pmr.value = Number(c.perMemberRedemptions || 0);
+
+      // NEW: per-member bonus cap (already present)
+      const capEl = $('req-pm-cap');
+      if (capEl) capEl.value = Number(c.perMemberBonusCap || 0);
+
+      // Enforce smart edit rules based on whether it started
+      enforceEditingRules_(c);
+
+      // Capture BASELINE and lock the submit until something changes
+      __reqBaseline = getRequestFormSnapshot_();
+      setSubmitEnabled_(false);
+    }
+
+    
+
+    function toggleWrap_(){
+      const t = (typeSel && typeSel.value) || 'new';
+      const show = (t === 'edit' || t === 'renew' || t === 'deactivate');
+      if (wrap) wrap.style.display = show ? '' : 'none';
+      if (show) { rebuildOptions_(); applyFromSelected_(); }
+    }
+
+    if (typeSel) typeSel.addEventListener('change', toggleWrap_);
+    if (sel) sel.addEventListener('change', applyFromSelected_);
+    // initialize once
+    toggleWrap_();
+  })();
+
+  document.getElementById('btn-toggle-new-request').onclick = () => openRequestForm_('new');
+  document.getElementById('btn-cancel-request-form').onclick = () => {
+      document.getElementById('form-campaign-request').classList.add('hidden');
+      document.getElementById('campaign-msg').textContent = '';
+  };
+
+  document.getElementById('form-campaign-request').onsubmit = (e) => {
+      e.preventDefault();
+      const form = document.getElementById('form-campaign-request');
+      const sid = getMsid();
+      const isNew = form.querySelector('#req-is-new').value === 'true';
+      const requestId = form.querySelector('#req-id').value;
+      const requestType = form.querySelector('#req-type').value;
+      const sourceId = form.querySelector('#req-source-id').value;
+      const msg = document.getElementById('campaign-msg');
+      // Block submission if nothing changed (for edit/renew/deactivate)
+      if (!isNew && !isFormChangedFromBaseline_()) {
+        msg.textContent = 'No changes to submit.';
+        setSubmitEnabled_(false);
+        return;
+      }
+
+      
+      // Common Payload fields
+      const payload = {
+          requestType,
+          title: form.querySelector('#req-title').value.trim(),
+          multiplier: Number(form.querySelector('#req-multiplier').value || 1),
+          startIso: form.querySelector('#req-start').value,
+          endIso: form.querySelector('#req-end').value,
+          minSpend: Number(form.querySelector('#req-minspend').value || 0),
+          maxRedemptions: Number(form.querySelector('#req-max-redemptions').value || 0), // GLOBAL
+          perMemberRedemptions: Number(document.getElementById('req-permem-reds').value || 0), // ← NEW
+          budgetCap: Number(form.querySelector('#req-budget-cap').value || 0),
+          notes: form.querySelector('#req-notes').value.trim(),
+          perMemberBonusCap: Number(document.getElementById('req-pm-cap').value || 0)
+          // Note: Billing Model/Cost Per Redemption/ImageUrl are omitted for simplicity here, add if needed.
+      };
+      
+      if (requestType !== 'new' && !sourceId) {
+          msg.textContent = 'Source Campaign ID is required for edit/renew/deactivate.';
+          return;
+      }
+      
+      if (isNew) {
+          google.script.run
+              .withSuccessHandler(() => {
+                  showToast('success', 'New Campaign Request submitted for review.');
+                  form.classList.add('hidden');
+                  loadCampaignRequests_();
+              })
+              .withFailureHandler(err => { msg.textContent = (err && err.message) || 'Submission failed.'; })
+              .merchantCreateCampaignRequest(sid, payload);
+              
+      } else { // Edit, Renew, Deactivate
+          // Add source ID to payload for easier server logic, although it's mandatory via the sheet row.
+          payload.sourceCouponId = sourceId;
+          payload.requestType = requestType; 
+          
+          google.script.run
+              .withSuccessHandler(() => {
+                  showToast('success', `Request ${requestId} updated.`);
+                  form.classList.add('hidden');
+                  loadCampaignRequests_();
+              })
+              .withFailureHandler(err => { msg.textContent = (err && err.message) || 'Update failed.'; })
+              .merchantUpdateCampaignRequest(sid, requestId, payload);
+      }
+  };
+
+  // Wire load buttons
+  document.getElementById('btn-load-active-campaigns').onclick = loadActiveCampaigns_;
+  document.getElementById('btn-load-requests').onclick = loadCampaignRequests_;
+
+
+  // ───────────────────────────────── End of Multiplier Campaign UI ─────────────────────────────────  
+
+  // boot
+  (function boot() {
+    function proceedToSessionCheck_() {
+      const sid = getMsid();
+      if (sid) {
+        google.script.run
+          .withSuccessHandler(res => {
+              if (res && res.ok) {
+                if (res.sid) setMsid(res.sid);
+                const who = document.getElementById('whoami');
+                if (who) who.textContent =
+                  'Signed in as ' + (res.username||'') + ' @ ' + (res.merchantId||'') + ' (' + (res.role||'') + ')';
+                __role = String(res.role || '').toLowerCase();
+                __merchantId = String(res.merchantId || '');
+                __username = String(res.username || '');
+
+                if (res.mustChange === true) {
+                  stopInactivityTimer_();
+                  show('pinchange');
+                  return;
+                }
+
+
+                const tabAna = document.getElementById('tab-analytics');
+                if (tabAna) tabAna.style.display = (__role === 'manager') ? '' : 'none';
+                const tabCamp = document.getElementById('tab-campaigns');
+                if (tabCamp) tabCamp.style.display = (__role === 'manager') ? '' : 'none';
+                const tabCpn = document.getElementById('tab-coupons');                 // NEW
+                if (tabCpn) tabCpn.style.display = (__role === 'manager') ? '' : 'none';
+                const tabStf = document.getElementById('tab-staff');
+                if (tabStf) tabStf.style.display = (__role === 'manager') ? '' : 'none';
+
+                // Hide "Create / Update Coupon" CTA when in requests-only mode
+                const cpnCta = document.getElementById('btn-toggle-coupon-form');
+                if (cpnCta) cpnCta.style.display = REQUESTS_ONLY_COUPONS ? 'none' : '';
+
+
+                function continueToPos_(){
+                  setActivePanel_('pos');
+                  show('pos');                 // this calls applyPrefillToForm_()
+                  normalizeViewport();
+                  startInactivityTimer_();
+                  enableAutoLabeling_();
+                  if (__role === 'manager') { 
+                        setTimeout(fetchAndRenderAnalytics_, 0); 
+                        setTimeout(loadActiveCampaigns_, 0); // <--- NEW
+                        setTimeout(loadCampaignRequests_, 0); // <--- NEW
+                    }
+                }
+
+
+                // Redeem staged prefill *before* showing POS
+                const staged = getStageId();
+                if (staged) {
+                  google.script.run
+                    .withSuccessHandler(r => {
+                      if (r && r.ok) setPrefill(r.memberId || '', r.mode || '');
+                      clearStageId();
+                      continueToPos_();
+                    })
+                    .withFailureHandler(() => { 
+                      clearStageId(); 
+                      continueToPos_();
+                    })
+                    .redeemPrefill(staged);
+                } else {
+                  continueToPos_();
+                }
+            } else {
+              clearMsid(); show('signin');
+            }
+          })
+          .withFailureHandler(() => { clearMsid(); show('signin'); })
+          .validateMSession(sid);
+      } else {
+        show('signin');
+      }
+    }
+
+    let safetyFired = false;
+    const safetyTimer = setTimeout(() => {
+      if (!safetyFired) { safetyFired = true; proceedToSessionCheck_(); }
+    }, 1200);
+
+    // Guard for non Apps Script environments or slow API injection
+    const hasAppsScript =
+      typeof google !== 'undefined' &&
+      google.script &&
+      google.script.url &&
+      typeof google.script.url.getLocation === 'function';
+
+    if (!hasAppsScript) {
+      clearTimeout(safetyTimer);
+      safetyFired = true;
+      proceedToSessionCheck_();
+    } else {
+      (function handleInitialParams_(){
+        try {
+          // 1) Start from server-injected params
+          const params = Object.assign({}, INIT_PARAMS || {});
+
+          // 2) Merge in live query (just in case)
+          try {
+            const usp = new URLSearchParams(location.search || '');
+            usp.forEach((v, k) => { if (!(k in params)) params[k] = v; });
+          } catch(_) {}
+
+          // 3) Also read hash fragment (e.g. app may pass p/t after '#')
+          try {
+            const frag = (location.hash || '').replace(/^#/, '');
+            const hsp = new URLSearchParams(frag);
+            hsp.forEach((v, k) => { if (!(k in params)) params[k] = v; });
+          } catch(_) {}
+
+          // 4) Normalize likely aliases
+          const aliasesSigned = ['p','payload','qr'];
+          const aliasesToken  = ['t','lt','linkToken','dl'];
+
+          const firstPresent = (keys) => {
+            for (const k of keys) {
+              if (params[k]) return String(params[k] || '');
+            }
+            return '';
+          };
+
+          const p = firstPresent(aliasesSigned); // signed QR payload (base64url)
+          const t = firstPresent(aliasesToken);  // deep link token (e.g., LT-XXXX)
+
+          // 5) Also scan any *key names* and *values* for LT-... tokens
+          const allKeys  = Object.keys(params);
+          const allVals  = Object.values(params).map(v => String(v||''));
+          const ltKeyFromName = allKeys.find(k => /^LT-[A-Za-z0-9_-]+$/.test(k));
+          const ltFromValues  = allVals.find(v => /^LT-[A-Za-z0-9_-]+$/.test(v));
+
+          const done = proceedToSessionCheck_;
+
+          const onStageOk = (res) => {
+            if (res && res.ok) {
+              setPrefill(res.memberId || '', res.mode || '');
+              setStageId(res.stageId || '');
+            }
+            done();
+          };
+
+          if (p) {
+            google.script.run.withSuccessHandler(onStageOk).withFailureHandler(done).stagePrefill(p, '');
+            return;
+          }
+          if (t) {
+            google.script.run.withSuccessHandler(onStageOk).withFailureHandler(done).stagePrefill('', t);
+            return;
+          }
+          if (ltKeyFromName) {
+            google.script.run.withSuccessHandler(onStageOk).withFailureHandler(done).stagePrefill('', ltKeyFromName);
+            return;
+          }
+          if (ltFromValues) {
+            google.script.run.withSuccessHandler(onStageOk).withFailureHandler(done).stagePrefill('', ltFromValues);
+            return;
+          }
+
+          // 6) Fallback: manual member/mode still supported
+          const m  = String(params.member || '').toUpperCase();
+          const md = String(params.mode   || '').toUpperCase();
+          if (m)  setPrefill(m, '');
+          if (md) setPrefill(m || '', md);
+          done();
+
+        } catch (e) {
+          proceedToSessionCheck_();
+        }
+      })();
+      
+    }
+
+    toggleCustomRangeUi_();
+  })();
+</script>
+</body>
+</html>

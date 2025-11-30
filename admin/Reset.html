@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Reset Master PIN</title>
+  <style>
+    :root{
+      --mx: 560px;
+      --pad: 16px;
+      --ring: 1px solid #e5e7eb;
+      --radius: 10px;
+      --shadow: 0 1px 2px rgba(0,0,0,.06), 0 6px 24px rgba(0,0,0,.06);
+      --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    * , *::before , *::after { box-sizing: border-box; }
+    html { overflow-x: hidden; }
+    body {
+      font-family: var(--font);
+      font-size: 15px;
+      margin: 0;
+      background:#fff;
+      overflow-x: clip;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+    .container{
+      max-width: var(--mx);
+      width: min(100%, var(--mx));
+      margin-left: auto; margin-right: auto;
+      padding-top: 24px; padding-bottom: 40px;
+      padding-left: max(var(--pad), env(safe-area-inset-left, 0px));
+      padding-right: max(var(--pad), env(safe-area-inset-right, 0px));
+      contain: inline-size;
+    }
+    .card{
+      background:#fff; border: var(--ring); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 14px;
+    }
+    h2{ margin:0 0 8px; font-size: 20px; }
+    .muted{ color:#5f6b7a; }
+    .stack{ display:grid; gap:12px; }
+    input, button {
+      padding:8px 10px; border:1px solid #e5e7eb; border-radius:8px; font:inherit; width:100%;
+    }
+    button{ background:#0ea5e9; color:#fff; border:0; cursor:pointer; }
+    .hidden { display:none !important; }
+
+    @media (max-width: 360px){
+      body{ font-size: 14px; }
+      .card{ padding: 12px; }
+      button{ padding: 5px 9px; font-size: .9em; }
+    }
+
+    /* adaptive centering and overflow hardening */
+    .container{ padding-inline: 16px; }
+    @supports (padding: max(0px)){
+      .container{
+        padding-inline-start: max(16px, calc(env(safe-area-inset-left, 0px)));
+        padding-inline-end:   max(16px, calc(env(safe-area-inset-right, 0px)));
+      }
+    }
+    .stack > * { min-width: 0; }
+
+    :where(p, small, li, td, th, button, input, label, code){
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    html, body { overflow-x: hidden; }
+
+    @media (max-width: 640px){
+      .card{ margin-left: auto; margin-right: auto; }
+    }    
+
+    html, body{
+      overflow-x: hidden;
+      overscroll-behavior-x: none;
+      touch-action: pan-y pinch-zoom;
+    }
+
+    .container{
+      max-width: var(--mx);
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+      contain: inline-size;
+    }
+
+    .card{ max-width: 100%; overflow-x: hidden; }
+
+    /* request from index page parity, harmless here */
+    .table-scroll{ overflow-x: hidden; overflow-y: visible; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card stack">
+      <h2>Reset Master Admin PIN</h2>
+      <form id="form-reset" class="stack">
+        <input type="hidden" id="token" value="<?= token ?>">
+        <label>New six digit PIN
+          <input id="pin" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required>
+        </label>
+        <label>Confirm six digit PIN
+          <input id="pin-confirm" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" required>
+        </label>
+        <button type="submit">Set New PIN</button>
+      </form>
+      <div id="msg" class="muted"></div>
+    </div>
+    <footer style="margin-top: 16px; font-size: 12px; text-align: right; color: #6b7280;">
+      Cashbeik Admin App version <span id="reset-version-text"></span>
+    </footer>
+  </div>
+
+<script>
+  // hard lock horizontal scroll
+  (function lockHorizontal(){
+    const el = document.scrollingElement || document.documentElement;
+    const fix = () => {
+      if (el.scrollLeft !== 0) el.scrollLeft = 0;
+      if (window.scrollX !== 0) window.scrollTo(0, window.scrollY);
+    };
+    window.addEventListener('scroll', fix, { passive: true });
+    window.addEventListener('resize', fix, { passive: true });
+  })();
+</script>
+<script>
+  const APP_VERSION = '<?= appVersion ?>' || 'dev';
+
+  function $(id){ return document.getElementById(id); }
+
+  function setResetVersionBadge_(){
+    const el = document.getElementById('reset-version-text');
+    if (el && !el.textContent) el.textContent = APP_VERSION || 'dev';
+  }
+
+  setResetVersionBadge_();
+
+  $('form-reset').onsubmit = (e) => {
+    e.preventDefault();
+    const token = $('token').value;
+    const pin = $('pin').value;
+    const confirm = $('pin-confirm').value;
+    const msgEl = $('msg');
+
+
+    if (!/^[0-9]{6}$/.test(pin)) { msgEl.textContent = 'PIN must be exactly 6 digits.'; return; }
+    if (pin !== confirm) { msgEl.textContent = 'PINs do not match.'; return; }
+
+    msgEl.textContent = 'Processing...';
+    $('form-reset').classList.add('hidden');
+
+    google.script.run
+      .withSuccessHandler(res => {
+        msgEl.innerHTML = '<b>Success.</b> Your PIN for <b>' + res.username + '</b> has been reset. You can close this page and sign in.';
+      })
+      .withFailureHandler(err => {
+        msgEl.textContent = 'Error: ' + ((err && err.message) || 'Unknown error. The token may be invalid or expired.');
+        $('form-reset').classList.remove('hidden');
+      })
+      .adminMasterCompleteReset(token, pin);
+  };
+</script>
+</body>
+</html>
