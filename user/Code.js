@@ -411,22 +411,24 @@ function createLinkToken(sid) {
 // ---- DB / Sheets ----
 function getDb_() {
   if (__DB_CACHE) return __DB_CACHE;
+
   let id = SP.getProperty(DB_ID_KEY);
   let ss = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.create(DB_NAME);
   if (!id) SP.setProperty(DB_ID_KEY, ss.getId());
 
-  const users = ensureSheet_(ss, USERS_SHEET, ['Email','PinHash','MemberId','CreatedAt']);
-  const sessions = ensureSheet_(ss, SESSIONS_SHEET, ['SID','Email','LastSeenMs','CreatedAt']);
-  const merchants = ensureSheet_(ss, MERCHANTS_SHEET, ['MerchantId','Name','Active','Secret','CreatedAt']);
-  const tx = ensureSheet_(ss, TX_SHEET, ['TxId','MemberId','MerchantId','Type','Points','AtMs','Staff']);
-  const balances = ensureSheet_(ss, BALANCES_SHEET, ['MemberId','Points']);
+  // Ensure sheets only once per invocation; reuse handles thereafter
+  const users      = ensureSheet_(ss, USERS_SHEET,       ['Email','PinHash','MemberId','CreatedAt']);
+  const sessions   = ensureSheet_(ss, SESSIONS_SHEET,    ['SID','Email','LastSeenMs','CreatedAt']);
+  const merchants  = ensureSheet_(ss, MERCHANTS_SHEET,   ['MerchantId','Name','Active','Secret','CreatedAt']);
+  const tx         = ensureSheet_(ss, TX_SHEET,          ['TxId','MemberId','MerchantId','Type','Points','AtMs','Staff']);
+  const balances   = ensureSheet_(ss, BALANCES_SHEET,    ['MemberId','Points']);
   const linkTokens = ensureSheet_(ss, LINK_TOKENS_SHEET, ['Token','MemberId','Mode','ExpiresAtMs','Used','CreatedAt']);
-  const lockouts = ensureSheet_(ss, LOCKOUTS_SHEET, ['Key','FailCount','LockUntilMs','UpdatedAt','FirstFailMs','TotalFails24h','PermLocked']);
-  const logs = ensureSheet_(ss, LOGS_SHEET, ['At','Type','Message']);
-  const resets = ensureSheet_(ss, RESET_TOKENS_SHEET,['Token','Email','ExpiresAtMs','Used','CreatedAt','VerifiedAtMs']);
-  const magic = ensureSheet_(ss, MAGIC_TOKENS_SHEET,['Token','Email','ExpiresAtMs','Used','CreatedAt']);
-  const waitlist = ensureSheet_(ss, WAITLIST_SHEET, ['At','Name','Email','PhoneE164','City','Country','Notes','Source','MemberId']);
-  const pending = ensureSheet_(ss, PENDING_REG_SHEET, [
+  const lockouts   = ensureSheet_(ss, LOCKOUTS_SHEET,    ['Key','FailCount','LockUntilMs','UpdatedAt','FirstFailMs','TotalFails24h','PermLocked']);
+  const logs       = ensureSheet_(ss, LOGS_SHEET,        ['At','Type','Message']);
+  const resets     = ensureSheet_(ss, RESET_TOKENS_SHEET,['Token','Email','ExpiresAtMs','Used','CreatedAt','VerifiedAtMs']);
+  const magic      = ensureSheet_(ss, MAGIC_TOKENS_SHEET,['Token','Email','ExpiresAtMs','Used','CreatedAt']);
+  const waitlist   = ensureSheet_(ss, WAITLIST_SHEET,    ['At','Name','Email','PhoneE164','City','Country','Notes','Source','MemberId']);
+  const pending    = ensureSheet_(ss, PENDING_REG_SHEET, [
     'PendingId','CreatedAtMs','Status',
     'Email','PhoneE164','WaE164','PrefComms',
     'OTP','OtpExpiresAtMs',
@@ -435,28 +437,7 @@ function getDb_() {
     'UTM_Source','UTM_Medium','UTM_Campaign','UTM_Term','UTM_Content',
     'CompletedAtMs','MemberId'
   ]);
-  const config = ensureSheet_(ss, CONFIG_SHEET, ['Key','Value']);
-  
-  // --- ADDED NEW COUPON AND CAMPAIGN SHEETS (Problem 1 & 3 Fix) ---
-  const coupons = ensureSheet_(ss, 'Coupons', [
-    'Code','MerchantId','Mode','Type','Value','MaxUses','UsedCount','PerMemberLimit',
-    'StartIso','EndIso','Active','CreatedAt','Notes'
-  ]);
-  const cpnUses = ensureSheet_(ss, 'CouponUses', ['Code','MemberId','MerchantId','AtMs','Staff','TxId']);
-  const campaigns = ensureSheet_(ss, 'Campaigns', [
-    'CampaignId','MerchantId','Title','Type','Multiplier',
-    'StartIso','EndIso','MinSpend','MaxRedemptions','MaxPerCustomer',
-    'BudgetCap','BillingModel','CostPerRedemption','Active','CreatedAt',
-    'UpdatedAt','ImageUrl','PerMemberRedemptions', 'PerMemberBonusCap'
-  ]);
-  const CampaignActivations = ensureSheet_(ss, 'CampaignActivations', [
-    'ActivationId','CampaignId','MemberId','ActivatedAtMs','ExpiresAtMs','Source','Notes'
-  ]);
-  const CampaignRedemptions = ensureSheet_(ss, 'CampaignRedemptions', [
-    'RedemptionId','CampaignId','MemberId','MerchantId','TxId','AtMs',
-    'BasePoints','Multiplier','BonusPoints','CostAccrued'
-  ]);
-  // --- END ADDED SHEETS ---
+  const config     = ensureSheet_(ss, CONFIG_SHEET,      ['Key','Value']);
 
   __DB_CACHE = {
     ss,
@@ -472,9 +453,7 @@ function getDb_() {
     magic,
     waitlist,
     pending,
-    config,
-    // --- ADDED NEW SHEETS TO RETURN OBJECT ---
-    coupons, cpnUses, campaigns, CampaignActivations, CampaignRedemptions
+    config
   };
   return __DB_CACHE;
 }
@@ -1598,92 +1577,3 @@ function userReportError(payload){
   return { ok:true };
 }
 
-// --- Add these functions to the bottom of User App - Code.gs ---
-
-/**
- * Returns a list of all active (live) campaigns. (Problem 3 Fix)
- */
-function userListActiveCampaigns(sid) {
-  const v = validateSession(sid);
-  if (!v || !v.ok) throw new Error('Not signed in.');
-  const { campaigns } = getDb_();
-  
-  const last = campaigns.getLastRow();
-  if (last < 2) return [];
-
-  const cols = Math.max(campaigns.getLastColumn() || 20, 20); // Max assumed columns
-  const vals = campaigns.getRange(2, 1, last - 1, cols).getValues();
-
-  const now = Date.now();
-  const out = [];
-
-  for (const r of vals) {
-    // Assuming column positions based on getUserDb_ definition (0-based index)
-    // Active=13, StartIso=5, EndIso=6, ImageUrl=16
-    const active = String(r[13] || '').toLowerCase() !== 'false';
-    const startMs = Date.parse(r[5] || 0); 
-    const endMs   = Date.parse(r[6] || 0); 
-
-    if (!active || isNaN(startMs) || isNaN(endMs) || now < startMs || now > endMs) {
-      continue;
-    }
-
-    out.push({
-      campaignId: String(r[0] || ''),
-      merchantId: String(r[1] || ''),
-      title: String(r[2] || ''),
-      multiplier: Number(r[4] || 0),
-      minSpend: Number(r[7] || 0),
-      imageUrl: String(r[16] || ''),
-      startIso: String(r[5] || ''),
-      endIso: String(r[6] || '')
-    });
-  }
-  return out;
-}
-
-/**
- * Returns a list of all live coupons available to the member (no redemption history check). (Problem 3 Fix)
- */
-function userListAvailableCoupons(sid) {
-  const v = validateSession(sid);
-  if (!v || !v.ok) throw new Error('Not signed in.');
-  const { coupons } = getDb_();
-  
-  const last = coupons.getLastRow();
-  if (last < 2) return [];
-
-  const cols = Math.max(coupons.getLastColumn() || 13, 13);
-  const vals = coupons.getRange(2, 1, last - 1, cols).getValues();
-
-  const now = Date.now();
-  const out = [];
-
-  for (const r of vals) {
-    // Assuming column positions based on getUserDb_ definition (0-based index)
-    // Active=10, StartIso=8, EndIso=9, Mode=2
-    const active = String(r[10] || '').toLowerCase() !== 'false';
-    const startMs = Date.parse(r[8] || 0); 
-    const endMs   = Date.parse(r[9] || 0); 
-
-    if (!active || isNaN(startMs) || isNaN(endMs) || now < startMs || now > endMs) {
-      continue;
-    }
-    
-    const mode = String(r[2] || '');
-    if (mode && mode !== 'COLLECT' && mode !== 'REDEEM') continue;
-
-    out.push({
-      code: String(r[0] || ''),
-      merchantId: String(r[1] || ''),
-      mode: mode,
-      type: String(r[3] || ''),
-      value: Number(r[4] || 0),
-      perMemberLimit: Number(r[7] || 0),
-      startIso: String(r[8] || ''),
-      endIso: String(r[9] || ''),
-      notes: String(r[12] || '')
-    });
-  }
-  return out;
-}

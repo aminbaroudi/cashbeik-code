@@ -728,11 +728,11 @@ function getAppVersion_() {
   }
 }
 
-// --- Replace the existing getUserDb_ function in Merchant App - Code.gs entirely ---
 function getUserDb_() {
   const id = MSP.getProperty(USER_DB_ID_KEY);
   if (!id) throw new Error('User DB is not linked. Run setupSetUserDbId(<ID>) once.');
   const ss = SpreadsheetApp.openById(id);
+
   const merchants  = ensureSheet_(ss, R_MERCHANTS, ['MerchantId','Name','Active','Secret','CreatedAt']);
   const tx         = ensureSheet_(ss, R_TX,        ['TxId','MemberId','MerchantId','Type','Points','AtMs','Staff']);
   const balances   = ensureSheet_(ss, R_BALANCES,  ['MemberId','Points']);
@@ -740,10 +740,12 @@ function getUserDb_() {
   const logs       = ensureSheet_(ss, 'Logs',      ['At','Type','Message']);
   const sessions   = ensureSheet_(ss, R_SESS,      ['SID','Email','LastSeenMs','CreatedAt']);
   const config     = ensureSheet_(ss, R_CONFIG,    ['Key','Value']);
+
   const coupons = ensureSheet_(ss, R_COUPONS, [
     'Code','MerchantId','Mode','Type','Value','MaxUses','UsedCount','PerMemberLimit',
     'StartIso','EndIso','Active','CreatedAt','Notes'
   ]);
+
   const cpnUses    = ensureSheet_(ss, R_CPN_USES, ['Code','MemberId','MerchantId','AtMs','Staff','TxId']);
   const couponRequests = ensureSheet_(ss, R_COUPON_REQUESTS, [
     'RequestId','MerchantId',
@@ -754,38 +756,41 @@ function getUserDb_() {
     'Status','CreatedBy','CreatedAt','UpdatedAt',
     'DecisionBy','DecisionAt','DecisionNotes'
   ]);
-  // --- UPDATED CAMPAIGN HEADERS (Problem 1 Fix) ---
+
+
   const campaigns  = ensureSheet_(ss, R_CAMPAIGNS, [
     'CampaignId','MerchantId','Title','Type','Multiplier',
     'StartIso','EndIso','MinSpend',
-    'MaxRedemptions',
-    'MaxPerCustomer',               // Added back for consistency with Admin App
-    'PerMemberRedemptions',
+    'MaxRedemptions',            // GLOBAL (all members)
+    'PerMemberRedemptions',      // ← NEW (per member)
     'BudgetCap',
     'BillingModel','CostPerRedemption','Active','CreatedAt','UpdatedAt',
     'ImageUrl',
     'PerMemberBonusCap'
   ]);
+
+
   const cpnRed     = ensureSheet_(ss, R_CAMPAIGN_REDEMPTIONS, [
     'RedemptionId','CampaignId','MemberId','MerchantId','TxId','AtMs',
     'BasePoints','Multiplier','BonusPoints','CostAccrued'
   ]);
+
   const campaignRequests = ensureSheet_(ss, R_CAMPAIGN_REQUESTS, [
     'RequestId','MerchantId','RequestType','Title','Multiplier',
     'StartIso','EndIso','MinSpend',
-    'MaxRedemptions',
-    'MaxPerCustomer',               // Added back for consistency with Admin App
-    'PerMemberRedemptions',
+    'MaxRedemptions',           // GLOBAL
+    'PerMemberRedemptions',     // ← NEW
     'BudgetCap',
     'BillingModel','CostPerRedemption','Notes','ImageUrl',
     'Status','CreatedBy','CreatedAt','UpdatedAt',
     'DecisionBy','DecisionAt','DecisionNotes','LinkedCampaignId',
     'PerMemberBonusCap'
   ]);
-  // --- END UPDATED CAMPAIGN HEADERS ---
+
+
   return {
     ss, merchants, tx, balances, linkTokens, logs, sessions, config,
-    coupons, cpnUses, couponRequests,
+    coupons, cpnUses,
     campaigns, cpnRed, campaignRequests
   };
 }
@@ -1222,8 +1227,8 @@ function managerListMyCoupons(sid){
       maxUses: Number(r[5]||0),
       usedCount: Number(r[6]||0),
       perMemberLimit: Number(r[7]||0),
-      startIso: String(r[8]||''),
-      endIso: String(r[9]||''),
+      startsAtMs: Number(r[8]||0),
+      expiresAtMs: Number(r[9]||0),
       active: String(r[10]||'').toUpperCase() !== 'FALSE',
       createdAt: String(r[11]||''),
       notes: String(r[12]||'')

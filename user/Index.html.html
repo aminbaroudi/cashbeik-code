@@ -1,4 +1,4 @@
-﻿<!-- File: Index.html (User app) -->
+<!-- File: Index.html (User app) -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -215,8 +215,7 @@
       overflow-x: hidden;
     }
 
-  #btn-logout { display: none; }
-</style>
+  </style>
 </head>
 <body>
   <div class="container">
@@ -448,20 +447,6 @@
 
             <div id="summary-msg" class="muted"></div>
           </div>
-          </div>
-          <div class="card stack">
-            <h3>Active Campaigns</h3>
-            <div id="campaign-list" class="stack">
-              <p id="campaign-msg" class="muted">Loading campaigns...</p>
-            </div>
-          </div>
-          <div class="card stack">
-            <h3>My Coupons</h3>
-            <div id="coupon-list" class="stack">
-              <p id="coupon-msg" class="muted">Loading coupons...</p>
-            </div>
-          </div>
-          </div>          
         </div>
 
         <div class="card" role="note" aria-live="polite">
@@ -606,74 +591,1040 @@
           version: APP_VERSION || '',
           extra: extra || null
         };
-        (function boot(){
-  function finishLoading() {
-    try { var loader = document.getElementById('loader'); if (loader) loader.style.display = 'none'; } catch(_) {}
-  }
-  var sid = null; try { sid = localStorage && localStorage.getItem('sid'); } catch(_) {}
-  if (!sid) {
-    finishLoading();
-    var lo = document.getElementById('btn-logout'); if (lo) lo.style.display = 'none';
-    show('signin');
-    return;
-  }
-  finishLoading();
-  google.script.run
-    .withSuccessHandler(function (res) {
-      if (res && res.ok) {
-        try { if (res.sid) localStorage.setItem('sid', res.sid); } catch(_) {}
-        var lo = document.getElementById('btn-logout'); if (lo) lo.style.display = 'inline-block';
-        navigateGuarded_('member');
-      } else {
-        try { localStorage.removeItem('sid'); } catch(_) {}
-        var lo = document.getElementById('btn-logout'); if (lo) lo.style.display = 'none';
-        show('signin');
-      }
-    })
-    .withFailureHandler(function () {
-      try { localStorage.removeItem('sid'); } catch(_) {}
-      var lo = document.getElementById('btn-logout'); if (lo) lo.style.display = 'none';
-      show('signin');
-    })
-    .validateSession(sid);
+        google.script.run.userReportError(payload);
+      }catch(_){}
+    }
+    window.addEventListener('error', function(e){
+      const msg = e && e.message ? e.message : 'window.error';
+      const st  = e && e.error && e.error.stack ? e.error.stack : '';
+      reportClientError_(msg, st, { line: e.lineno, col: e.colno, src: e.filename });
+    });
+    window.addEventListener('unhandledrejection', function(e){
+      const reason = e && e.reason ? e.reason : 'unhandledrejection';
+      let msg = '', st = '';
+      try{
+        if (typeof reason === 'string') msg = reason;
+        else if (reason && reason.message) msg = reason.message;
+        if (reason && reason.stack) st = reason.stack;
+      }catch(_){}
+      reportClientError_(msg || 'unhandledrejection', st || '', null);
+    }); 
+  </script>
 
-  setTimeout(function(){
-    try {
-      var vm = document.getElementById('view-member');
-      var vs = document.getElementById('view-signin');
-      var vmVisible = (vm && !vm.classList.contains('hidden'));
-      var vsVisible = (vs && !vs.classList.contains('hidden'));
-      if (!vmVisible && !vsVisible) {
-        try { localStorage.removeItem('sid'); } catch(_) {}
-        var lo = document.getElementById('btn-logout'); if (lo) lo.style.display = 'none';
-        show('signin');
+  <!-- existing script block unchanged below -->
+  <script>
+    /* original app script starts here. only layout friendly edits inside functions where called */
+
+    // Views
+    const VIEWS = ['loading','home','signup','signin','reset-request','reset-complete','member'];
+    let inactivityTimer = null;
+    var __inactResetHandler = null;
+
+    function show(view) {
+      clearBanner();
+      document.querySelectorAll('section[id^="view-"]').forEach(el => el.classList.add('hidden'));
+      const tgt = document.getElementById('view-' + view);
+      if (tgt) tgt.classList.remove('hidden');
+
+      // always normalize when switching views
+      normalizeViewport();
+
+      if (view === 'signin') {
+        const pin = document.getElementById('si-pin'); if (pin) pin.value = '';
+        const sm  = document.getElementById('si-msg'); if (sm) sm.textContent = '';
+        const sl  = document.getElementById('si-lock'); if (sl) sl.textContent = '';
+        setTimeout(()=>{ try { refreshSigninLockUi_(); } catch(_){ } }, 0);
       }
-    } catch(_) {}
-  }, 8000);
-})();
-setTimeout(function(){
-  try {
-    var logoutBtn = document.getElementById('btn-logout');
-    var loggedIn = (logoutBtn && logoutBtn.style.display !== 'none');
-    var memberView = document.getElementById('view-member');
-    var memberVisible = (memberView && !memberView.classList.contains('hidden'));
-    if (!loggedIn && !memberVisible) { clearSid(); navigateGuarded_('signin'); }
-  } catch(_) {}
-}, 8000);
-setTimeout(function(){
-  try {
-    var logoutBtn = document.getElementById('btn-logout');
-    var loggedIn = (logoutBtn && logoutBtn.style.display !== 'none');
-    var memberView = document.getElementById('view-member');
-    var memberVisible = (memberView && !memberView.classList.contains('hidden'));
-    if (!loggedIn && !memberVisible) { clearSid(); navigateGuarded_('signin'); }
-  } catch(_) {}
-}, 8000);
+      if (view === 'member') {
+        enableAutoLabeling_();
+      }
+    }
+
+
+
+    let __reg = { pendingId:'', method:'', expiresAtMs:0, pin:'' };
+    let __utm = { source:'', medium:'', campaign:'', term:'', content:'' };
+    let __geo = { city:'', country:'' };
+    let __flags = { waitlist: false };
+
+    async function ensureGeo_(){
+      const cityInput = document.getElementById('su-city');
+      const cityTyped = cityInput && cityInput.value && cityInput.value.trim();
+      if ((__geo.city && __geo.country) || cityTyped) return;
+      try {
+        const r = await fetch('https://ipapi.co/json/');
+        const j = await r.json();
+        if (j) {
+          __geo.city    = __geo.city    || j.city || '';
+          __geo.country = __geo.country || j.country_name || '';
+        }
+      } catch(_) {}
+    }
+
+    function openStep_(idToOpen){
+      ['su-step1','su-step2','su-step3','su-step-otp'].forEach(id=>{
+        const d = document.getElementById(id);
+        if (!d) return;
+        d.open = (id === idToOpen);
+      });
+      const first = document.querySelector(`#${idToOpen} input, #${idToOpen} select, #${idToOpen} button`);
+      if (first) first.focus({preventScroll:false});
+    }
+
+    window.onpopstate = null;
+    function getRoute_() { return 'home'; }
+
+    function setSid(sid) {
+      try { sessionStorage.setItem('sid', sid); } catch(e) {}
+      document.cookie = 'sid=' + encodeURIComponent(sid) + '; path=/; SameSite=Lax; Secure';
+    }
+    function getSid() {
+      var m = document.cookie.match(/(?:^|; )sid=([^;]*)/);
+      if (m) return decodeURIComponent(m[1]);
+      try { return sessionStorage.getItem('sid') || ''; } catch(e) { return ''; }
+    }
+    function clearSid() {
+      try { sessionStorage.removeItem('sid'); } catch(e) {}
+      document.cookie = 'sid=; path=/; max-age=0; SameSite=Lax; Secure';
+    }
+
+    let __bannerTimer = null;
+    function clearBanner(){
+      clearTimeout(__bannerTimer);
+      __bannerTimer = null;
+      const c = document.getElementById('app-banner');
+      if (c) c.innerHTML = '';
+    }
+    function showBanner(kind, message, opts){
+      const c = document.getElementById('app-banner'); if (!c) return;
+      clearBanner();
+      const t = (kind||'info').toLowerCase();
+      const cls = t==='success' ? 'banner-success' : t==='error' ? 'banner-error' : 'banner-info';
+      const label = t==='success' ? 'Success' : t==='error' ? 'Error' : 'Info';
+      const div = document.createElement('div');
+      div.className = 'banner ' + cls;
+      div.innerHTML = '<strong>'+label+':</strong><span>'+String(message||'')+'</span><button class="close" aria-label="Close">×</button>';
+      div.querySelector('.close').onclick = clearBanner;
+      c.appendChild(div);
+      const persist = opts && opts.persist ? true : false;
+      const shouldScroll = opts && 'scroll' in opts ? !!opts.scroll : t==='error';
+      if (shouldScroll) {
+        const r = c.getBoundingClientRect();
+        const inView = r.top >= 0 && r.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+        if (!inView) c.scrollIntoView({ behavior:'smooth', block:'start' });
+      }
+      if (!persist) __bannerTimer = setTimeout(()=>clearBanner(), 6000);
+    }
+    function showToast(kind, message, ms=3500){
+      const cont = document.getElementById('toast-container'); if (!cont) return;
+      const t = document.createElement('div');
+      t.className = 'toast ' + (kind||'success');
+      t.innerHTML = '<button class="close" aria-label="Close">×</button>' + String(message||'');
+      t.querySelector('.close').onclick = () => cont.removeChild(t);
+      cont.appendChild(t);
+      if (ms > 0) setTimeout(()=>{ if (t.parentNode) cont.removeChild(t); }, ms);
+    }
+    function setSectionMsg(id, kind, text){
+      const el = document.getElementById(id); if (!el) return;
+      el.textContent = text || '';
+      if (!text) return;
+      el.style.color = kind==='error' ? '#b00020' : kind==='success' ? '#1b5e20' : '#333';
+      const r = el.getBoundingClientRect();
+      const inView = r.top >= 0 && r.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+      if (!inView) el.scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+
+    function setMyQrFromServer_(memberId) {
+      const qrImg  = document.getElementById('my-qr');
+      const qrMsg  = document.getElementById('qr-msg');
+      const qrWrap = document.getElementById('qr-wrap');
+      if (!qrImg || !qrWrap) return;
+
+      try {
+        const cachedUrl = sessionStorage.getItem('last_qr_url') || '';
+        const cachedTs  = Number(sessionStorage.getItem('last_qr_ts') || 0);
+        if (cachedUrl && (Date.now() - cachedTs) < 5 * 60 * 1000) {
+          qrImg.src = cachedUrl;
+          qrWrap.classList.remove('loading');
+        }
+      } catch (_) {}
+
+      const sid = getSid();
+      qrWrap.classList.add('loading');
+      google.script.run
+        .withSuccessHandler(function(res){
+          if (res && (res.url || res.qr)) {
+            const qrContent = res.url || res.qr; // use full URL if available
+            const urlStr = 'https://quickchart.io/qr?text=' + encodeURIComponent(qrContent) + '&size=200';
+            qrImg.src = urlStr;
+            if (qrMsg) qrMsg.textContent = '';
+            try {
+              sessionStorage.setItem('last_qr_url', urlStr);
+              sessionStorage.setItem('last_qr_ts', String(Date.now()));
+            } catch(_) {}
+          } else {
+            if (qrMsg) qrMsg.textContent = 'QR unavailable.';
+          }
+          qrWrap.classList.remove('loading');
+        })
+        .withFailureHandler(function(err){
+          qrWrap.classList.remove('loading');
+          if (qrMsg) qrMsg.textContent = (err && err.message) || 'QR unavailable.';
+        })
+        .getSignedQr(sid);
+    }
+
+    function fmtInt_(n){ return Number(n||0).toLocaleString(); }
+    function fmtWhen_(ms){
+      const t = Number(ms||0); if (!t) return '—';
+      const d = new Date(t);
+      const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+      const hh = String(d.getHours()).padStart(2,'0'), mm = String(d.getMinutes()).padStart(2,'0');
+      return `${y}-${m}-${day} ${hh}:${mm}`;
+    }
+
+    function renderMemberSummary_(payload){
+      if (!payload) return;
+      var balEl = document.getElementById('balance-val');
+      if (balEl) balEl.textContent = fmtInt_(payload.balance);
+
+      var tb = document.querySelector('#tbl-recent tbody');
+      if (tb) {
+        tb.innerHTML = '';
+        (payload.recent || []).forEach(function(r){
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td>' + fmtWhen_(r.atMs) + '</td>' +
+            '<td>' + (r.merchantName || '—') + '</td>' +
+            '<td>' + (r.type || '') + '</td>' +
+            '<td class="num">' + fmtInt_(r.points) + '</td>';
+          tb.appendChild(tr);
+        });
+        if ((payload.recent || []).length === 0) {
+          var tr = document.createElement('tr');
+          tr.innerHTML = '<td colspan="4" style="color:#666; padding:6px;">No transactions yet.</td>';
+          tb.appendChild(tr);
+        }
+        enableAutoLabeling_(); /* layout only */
+      }
+    }
+
+    function fetchMemberSummary_(){
+      var sid = getSid();
+      var msg = document.getElementById('summary-msg');
+      if (msg) msg.textContent = '';
+      var rngSel = document.getElementById('summary-range');
+      var rng = rngSel ? rngSel.value : '5';
+      google.script.run
+        .withSuccessHandler(function(res){ renderMemberSummary_(res); })
+        .withFailureHandler(function(err){
+          if (msg) msg.textContent = (err && err.message) ? err.message : 'Failed to load summary.';
+        })
+        .getMemberSummary(sid, rng);
+    }
+
+    function requireSessionThen(viewIfOk) {
+      if (!viewIfOk) viewIfOk = 'member';
+      var sid = getSid();
+      return new Promise(function(resolve) {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(function(){ resolve(null); })
+          .validateSession(sid);
+      }).then(function(res) {
+        if (res && res.ok) {
+          if (res.sid) setSid(res.sid);
+          document.getElementById('member-id').textContent = 'Member ID: ' + (res.memberId || '—');
+          if (res.memberId) setMyQrFromServer_(res.memberId);
+          normalizeViewport();                  // add
+          startInactivityTimer_();
+          show(viewIfOk);
+          if (viewIfOk === 'member') fetchMemberSummary_();
+          return true;
+        } else {
+          clearSid();
+          stopInactivityTimer_();
+          show('signin');
+          return false;
+        }
+      });
+    }
+
+    function navigateGuarded_(target) {
+      if (__flags.waitlist && (target === 'signup' || target === 'signin')) {
+        show('home');
+        alert('We are not live yet. Please check back soon.');
+        return;
+      }
+      if (target === 'member') {
+        requireSessionThen('member');
+      } else {
+        stopInactivityTimer_();
+        if (target === 'signup') resetSignupWizard_();
+        show(target);
+      }
+    }
+
+    let countdownInterval = null;
+    function startInactivityTimer_() {
+      stopInactivityTimer_();
+      const timerEl = document.getElementById('session-timer');
+      let remaining = 60;
+      const updateUI = () => { if (timerEl) timerEl.textContent = 'Session: ' + remaining + ' s remaining'; };
+      const reset = () => {
+        clearTimeout(inactivityTimer);
+        clearInterval(countdownInterval);
+        remaining = 60;
+        updateUI();
+        countdownInterval = setInterval(() => {
+          remaining--;
+          updateUI();
+          if (remaining <= 0) { clearInterval(countdownInterval); }
+        }, 1000);
+        inactivityTimer = setTimeout(() => {
+          const sid = getSid();
+          if (!sid) {
+            clearSid();
+            if (timerEl) timerEl.textContent = 'Session expired.';
+            show('signin');
+            clearBanner();
+            showBanner('error','Session expired.');
+            const em = document.getElementById('si-email'); if (em) em.value = '';
+            const pn = document.getElementById('si-pin');   if (pn) pn.value = '';
+            const sm = document.getElementById('si-msg');   if (sm) sm.textContent = '';
+            const sl = document.getElementById('si-lock');  if (sl) sl.textContent = '';
+            clearSigninCountdown_ && clearSigninCountdown_();
+          }
+          google.script.run.withSuccessHandler(() => {
+            clearSid();
+            if (timerEl) timerEl.textContent = 'Session expired.';
+            show('signin');
+            clearBanner();
+            showBanner('error','Session expired.');
+            const em = document.getElementById('si-email'); if (em) em.value = '';
+            const pn = document.getElementById('si-pin');   if (pn) pn.value = '';
+            const sm = document.getElementById('si-msg');   if (sm) sm.textContent = '';
+            const sl = document.getElementById('si-lock');  if (sl) sl.textContent = '';
+            clearSigninCountdown_ && clearSigninCountdown_();
+          }).logout(sid);
+        }, 60 * 1000);
+      };
+      __inactResetHandler = reset;
+      ['click','keydown','mousemove','scroll','touchstart'].forEach(ev => {
+        document.addEventListener(ev, __inactResetHandler, { passive:true });
+      });
+      reset();
+    }
+    function stopInactivityTimer_() {
+      clearTimeout(inactivityTimer);
+      clearInterval(countdownInterval);
+      if (__inactResetHandler) {
+        ['click','keydown','mousemove','scroll','touchstart'].forEach(ev => {
+          document.removeEventListener(ev, __inactResetHandler);
+        });
+        __inactResetHandler = null;
+      }
+      const timerEl = document.getElementById('session-timer');
+      if (timerEl) timerEl.textContent = 'Session: —';
+      const m = document.getElementById('inact-msg');
+      if (m) m.textContent = '';
+    }
+
+    function normalizeLebPhoneLocal_(p){
+      const s = String(p || '').replace(/\D/g,'');
+      if (!s) return '';
+      if (/^[0-9]{8}$/.test(s)) return s;
+      if (/^[0-9]{7}$/.test(s) && s[0] === '3') return '0' + s;
+      return null;
+    }
+
+    function openWaitlistModal_(source){
+      try {
+        document.getElementById('wl-city').value = __geo.city || '';
+        document.getElementById('wl-country').value = __geo.country || '';
+      } catch(_){}
+      try {
+        const siEmail = document.getElementById('si-email');
+        if (siEmail && siEmail.value) document.getElementById('wl-email').value = siEmail.value.trim();
+      } catch(_){}
+      const overlay = document.getElementById('waitlist-overlay');
+      overlay.dataset.source = source || '';
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden','false');
+      const m = document.getElementById('wl-msg'); if (m) m.textContent = '';
+      const nameIn = document.getElementById('wl-name');
+      if (nameIn) nameIn.focus({preventScroll:false});
+    }
+    function closeWaitlistModal_(){
+      const f = document.getElementById('form-waitlist');
+      if (f) f.reset();
+      const m = document.getElementById('wl-msg'); if (m) m.textContent = '';
+      const overlay = document.getElementById('waitlist-overlay');
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden','true');
+    }
+
+    const wlOpenHome = document.getElementById('btn-open-waitlist-home');
+    if (wlOpenHome) wlOpenHome.onclick = ()=> openWaitlistModal_('home');
+    const wlCancel = document.getElementById('wl-cancel');
+    if (wlCancel) wlCancel.onclick = closeWaitlistModal_;
+    const wlCloseX = document.getElementById('wl-close');
+    if (wlCloseX) wlCloseX.onclick = closeWaitlistModal_;
+    const wlOverlay = document.getElementById('waitlist-overlay');
+    if (wlOverlay) wlOverlay.addEventListener('click', (ev)=>{ if (ev.target === wlOverlay) closeWaitlistModal_(); });
+    document.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape') { const ov = document.getElementById('waitlist-overlay'); if (ov && ov.classList.contains('show')) closeWaitlistModal_(); } });
+
+    const wlForm = document.getElementById('form-waitlist');
+    if (wlForm) wlForm.onsubmit = function(e){
+      e.preventDefault();
+      const name  = document.getElementById('wl-name').value.trim();
+      const email = document.getElementById('wl-email').value.trim();
+      const phone = document.getElementById('wl-phone8').value.trim();
+      const notes = document.getElementById('wl-notes').value.trim();
+      const city  = document.getElementById('wl-city').value.trim();
+      const country = document.getElementById('wl-country').value.trim();
+      const msg   = document.getElementById('wl-msg');
+      const btn   = document.getElementById('wl-submit');
+
+      if (!name){ msg.textContent = 'Please enter your name.'; return; }
+      if (!email || !/@/.test(email)){ msg.textContent = 'Enter a valid email.'; return; }
+
+      let phoneLocal8 = '';
+      if (phone) {
+        const norm = normalizeLebPhoneLocal_(phone);
+        if (!norm) { msg.textContent = 'Phone must be 8 digits or 7 digits only if it starts with 3.'; return; }
+        phoneLocal8 = norm;
+      }
+
+      let memberId = '';
+      try {
+        const txt = document.getElementById('member-id').textContent || '';
+        const m = txt.match(/Member ID:\s*([A-Z0-9-]+)/i);
+        if (m) memberId = m[1];
+      } catch(_){}
+
+      const payload = { name, email, phoneLocal8, notes, city, country, source: (wlOverlay && wlOverlay.dataset && wlOverlay.dataset.source) || '', memberId };
+
+      btn.disabled = true;
+      msg.textContent = '';
+
+      google.script.run
+        .withSuccessHandler(function(){
+          msg.style.color = '#0a0';
+          msg.textContent = 'You are on the list. Thank you.';
+          setTimeout(()=>{ closeWaitlistModal_(); msg.style.color='#b00'; }, 1200);
+          btn.disabled = false;
+        })
+        .withFailureHandler(function(err){
+          btn.disabled = false;
+          msg.style.color = '#b00';
+          msg.textContent = (err && err.message) || 'Could not add to waitlist.';
+        })
+        .addToWaitlist(payload);
+    };
+
+    ['su1-cancel','su2-cancel','su3-cancel','suotp-cancel'].forEach(id=>{
+      const b = document.getElementById(id);
+      if (b) b.onclick = ()=>{ navigateGuarded_('home'); };
+    });
+
+    const waIn = document.getElementById('su-wa8');
+    const waPx = document.getElementById('su-wa-prefix');
+    if (waIn && waPx){
+      const upd = ()=>{ waPx.style.color = waIn.value.trim().length > 0 ? '#333' : '#aaa'; };
+      waIn.addEventListener('input', upd); upd();
+    }
+
+    document.getElementById('form-su-1').onsubmit = (e)=>{
+      e.preventDefault();
+      const first = document.getElementById('su-first').value.trim();
+      const last  = document.getElementById('su-last').value.trim();
+      const birth = document.getElementById('su-birth').value.trim();
+      const gender = document.getElementById('su-gender').value;
+      const msg = document.getElementById('su1-msg');
+
+      if (!first || !last){ msg.textContent='Enter first and last name.'; return; }
+      if (!birth){ msg.textContent='Enter birthdate.'; return; }
+      if (!gender){ msg.textContent='Please select your gender.'; return; }
+
+      try {
+        const d = new Date(birth);
+        const sixteen = new Date(d.getFullYear()+16, d.getMonth(), d.getDate());
+        if (new Date() < sixteen){ msg.textContent='You must be at least sixteen.'; return; }
+      } catch(_) {}
+
+      msg.textContent='';
+      openStep_('su-step2');
+    };
+
+    document.getElementById('form-su-2').onsubmit = (e)=>{
+      e.preventDefault();
+      const email  = document.getElementById('su-email').value.trim();
+      const phone  = document.getElementById('su-phone8').value.trim();
+      const wa     = document.getElementById('su-wa8').value.trim();
+      const pref   = document.getElementById('su-pref').value;
+      const msg    = document.getElementById('su2-msg');
+
+      if (!email || !/@/.test(email)){ msg.textContent='Enter a valid email.'; return; }
+
+      const normalizeLeb = (p) => {
+        if (/^[0-9]{8}$/.test(p)) return p;
+        if (/^[0-9]{7}$/.test(p) && p[0] === '3') return '0' + p;
+        return null;
+      };
+
+      const normPhone = normalizeLeb(phone);
+      if (!normPhone) { msg.textContent = 'Phone must be 8 digits or 7 digits only if it starts with 3.'; return; }
+
+      let normWa = '';
+      if (wa) {
+        normWa = normalizeLeb(wa);
+        if (!normWa) { msg.textContent = 'WhatsApp must be 8 digits or 7 digits only if it starts with 3.'; return; }
+      }
+
+      if (!pref){ msg.textContent='Choose a communication method.'; return; }
+
+      document.getElementById('su-phone8').value = normPhone;
+      document.getElementById('su-wa8').value    = normWa;
+
+      msg.textContent='';
+      openStep_('su-step3');
+    };
+
+    document.getElementById('form-su-3').onsubmit = async (e)=>{
+      if (__flags.waitlist) { alert('We are not live yet.'); return; }
+      e.preventDefault();
+      const p1 = document.getElementById('su-pin1').value.trim();
+      const p2 = document.getElementById('su-pin2').value.trim();
+      const chk = document.getElementById('su-legal');
+      const msg = document.getElementById('su3-msg');
+      if (!/^[0-9]{6}$/.test(p1) || p1 !== p2){ msg.textContent='PINs must match and be six digits.'; return; }
+      if (!chk.checked){ msg.textContent='You must agree to the terms.'; return; }
+      msg.textContent='';
+      await ensureGeo_();
+
+      const payload = {
+        first: document.getElementById('su-first').value.trim(),
+        last:  document.getElementById('su-last').value.trim(),
+        birthYmd: document.getElementById('su-birth').value.trim(),
+        gender: document.getElementById('su-gender').value,
+        city: document.getElementById('su-city').value.trim() || __geo.city,
+        country: __geo.country || '',
+        lang: document.getElementById('su-lang').value,
+        email: document.getElementById('su-email').value.trim(),
+        phoneLocal8: (() => {
+          const p = document.getElementById('su-phone8').value.trim();
+          if (/^[0-9]{8}$/.test(p)) return p;
+          if (/^[0-9]{7}$/.test(p) && p[0]==='3') return '0' + p;
+          return p;
+        })(),
+        waLocal8: (() => {
+          const w = document.getElementById('su-wa8').value.trim();
+          if (!w) return '';
+          if (/^[0-9]{8}$/.test(w)) return w;
+          if (/^[0-9]{7}$/.test(w) && w[0]==='3') return '0' + w;
+          return w;
+        })(),
+        prefComms: document.getElementById('su-pref').value,
+        referral: document.getElementById('su-referral').value.trim(),
+        optMarketing: document.getElementById('su-optin').checked,
+        pin1: p1, pin2: p2,
+        utm_source: __utm.source, utm_medium: __utm.medium, utm_campaign: __utm.campaign, utm_term: __utm.term, utm_content: __utm.content
+      };
+
+      const btn = document.getElementById('su3-submit');
+      btn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(function(res){
+          btn.disabled = false;
+          if (res && res.ok){
+            __reg.pendingId = res.pendingId; __reg.method = res.method; __reg.expiresAtMs = res.expiresAtMs; __reg.pin = p1;
+            document.getElementById('su-step-otp').classList.remove('hidden');
+            const otpIn = document.getElementById('su-otp');
+            if (otpIn) otpIn.value = '';
+            openStep_('su-step-otp');
+          } else {
+            msg.textContent = 'Could not start registration.';
+          }
+        })
+        .withFailureHandler(function(err){
+          btn.disabled = false;
+          msg.textContent = (err && err.message) || 'Failed.';
+        })
+        .startRegistration(payload);
+    };
+
+    document.getElementById('form-su-otp').onsubmit = (e)=>{
+      e.preventDefault();
+      const code = document.getElementById('su-otp').value.trim();
+      const msg = document.getElementById('suotp-msg');
+      if (!/^[0-9]{6}$/.test(code)){ msg.textContent='Enter the six digit code.'; return; }
+      msg.textContent = '';
+      const btn = document.getElementById('suotp-submit');
+      btn.disabled = true;
+      google.script.run
+        .withSuccessHandler(function(res){
+          btn.disabled = false;
+          if (res && res.ok){
+            document.getElementById('su-done-text').textContent = 'Welcome. Your Member ID: ' + res.memberId;
+            show('welcome');
+          } else {
+            msg.textContent = 'Verification failed.';
+          }
+        })
+        .withFailureHandler(function(err){
+          btn.disabled = false;
+          msg.textContent = (err && err.message) || 'Failed.';
+        })
+        .verifyRegistrationOtp(__reg.pendingId, code, __reg.pin);
+    };
+
+    document.getElementById('suotp-resend').onclick = function(){
+      const btn = this;
+      const msg = document.getElementById('suotp-msg');
+      btn.disabled = true;
+      google.script.run
+        .withSuccessHandler(function(){
+          btn.disabled = false;
+          msg.textContent = 'New code sent if email.';
+        })
+        .withFailureHandler(function(err){
+          btn.disabled = false;
+          msg.textContent = (err && err.message) || 'Could not resend.';
+        })
+        .resendRegistrationOtp(__reg.pendingId);
+    };
+
+    document.getElementById('su-done-next').onclick = function(){
+      show('signin');
+      document.getElementById('si-email').value = document.getElementById('su-email').value.trim();
+    };
+
+    (function initSignUpView_(){})();
+
+    document.getElementById('btn-go-signup').onclick = function(){ navigateGuarded_('signup'); };
+    document.getElementById('btn-go-signin').onclick = function(){ navigateGuarded_('signin'); };
+    document.getElementById('btn-si-cancel').onclick = function(){ navigateGuarded_('home'); };
+
+    (function wireEmailWatcher_(){
+      const em = document.getElementById('si-email');
+      if (!em) return;
+      let t = null;
+      const kick = ()=>{ if (t) clearTimeout(t); t = setTimeout(refreshSigninLockUi_, 200); };
+      em.addEventListener('input', kick);
+      em.addEventListener('change', kick);
+    })();
+
+    document.getElementById('form-signin').onsubmit = function(e) {
+      if (__flags.waitlist) { alert('We are not live yet.'); return; }
+      e.preventDefault();
+      var email = document.getElementById('si-email').value.trim();
+      var pin = document.getElementById('si-pin').value.trim();
+      const siMsg = document.getElementById('si-msg');
+      const siLock = document.getElementById('si-lock');
+
+      if (!/^[0-9]{6}$/.test(pin)) { siMsg.textContent = 'PIN must be six digits.'; return; }
+      siMsg.textContent = '';
+      clearBanner();
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.ok && res.sid) {
+            setSid(res.sid);
+            document.getElementById('member-id').textContent = 'Member ID: ' + res.memberId;
+            setMyQrFromServer_(res.memberId);
+            startInactivityTimer_();
+            if (siLock) siLock.textContent = '';
+            clearSigninCountdown_ && clearSigninCountdown_();
+            show('member');
+            fetchMemberSummary_();
+            showBanner('success','Signed in.');
+          } else {
+            const t = (res && res.msg) ? res.msg : 'Sign in failed.';
+            siMsg.textContent = t;
+            showBanner('error', t, { scroll:true });
+
+            if (res && res.lock) {
+              const L = res;
+              if (L.lock && L.lock.permanent) {
+                if (siLock) siLock.textContent = 'This account is blocked. Please contact support.';
+                clearSigninCountdown_ && clearSigninCountdown_();
+              } else if (L.lock && L.lock.locked) {
+                if (siLock) siLock.textContent = 'Too many attempts.';
+                if (typeof L.lock.untilMs === 'number') startSigninCountdown_(Number(L.lock.untilMs));
+                else clearSignin_ && clearSigninCountdown_();
+              } else {
+                const fc = Number(L.lock && L.lock.failCount || 0);
+                const tgt = Number(L.lock && L.lock.nextTarget || 0);
+                if (fc > 0 && tgt > 0) { if (siLock) siLock.textContent = 'Attempts: ' + fc + ' / ' + tgt + ' before a cooldown'; }
+                else if (fc > 0)       { if (siLock) siLock.textContent = 'Attempts: ' + fc; }
+                else                   { if (siLock) siLock.textContent = ''; }
+                clearSigninCountdown_ && clearSigninCountdown_();
+              }
+            } else {
+              if (siLock) siLock.textContent = '';
+              clearSigninCountdown_ && clearSigninCountdown_();
+            }
+          }
+        })
+        .withFailureHandler(function(err) {
+          const t = (err && err.message) ? err.message : 'Sign in failed.';
+          siMsg.textContent = t;
+          showBanner('error', t, { scroll:true });
+          try { refreshSigninLockUi_(); } catch(_){}
+        })
+        .signinAttempt(email, pin);
+    };
+
+    let __siCountdownTimer = null;
+    function clearSigninCountdown_(){
+      if (__siCountdownTimer){ clearInterval(__siCountdownTimer); __siCountdownTimer = null; }
+      const c = document.getElementById('si-countdown');
+      if (c) c.textContent = '';
+    }
+    function fmtHms_(ms){
+      if (ms < 0) ms = 0;
+      const s = Math.floor(ms/1000);
+      const hh = Math.floor(s/3600);
+      const mm = Math.floor((s%3600)/60);
+      const ss = s%60;
+      if (hh > 0) return `${hh}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+      return `${mm}:${String(ss).padStart(2,'0')}`;
+    }
+    function startSigninCountdown_(untilMs){
+      clearSigninCountdown_();
+      const c = document.getElementById('si-countdown');
+      if (!c) return;
+      const tick = ()=>{
+        const left = untilMs - Date.now();
+        if (left <= 0){
+          clearSigninCountdown_();
+          c.textContent = '';
+          refreshSigninLockUi_();
+          return;
+        }
+        c.textContent = 'Locked — ' + fmtHms_(left) + ' remaining';
+      };
+      tick();
+      __siCountdownTimer = setInterval(tick, 1000);
+    }
+
+    function refreshSigninLockUi_(){
+      const el = document.getElementById('si-lock');
+      const email = (document.getElementById('si-email')?.value || '').trim().toLowerCase();
+      clearSigninCountdown_();
+      if (!el){ return; }
+      if (!email){
+        el.textContent = '';
+        return;
+      }
+      google.script.run
+        .withSuccessHandler(function(info){
+          if (!info || !info.ok){ el.textContent = ''; return; }
+          if (info.permanent){
+            el.textContent = 'This account is blocked. Please contact support.';
+            return;
+          }
+          if (info.locked){
+            el.textContent = 'Too many attempts.';
+            startSigninCountdown_(Number(info.untilMs||0));
+            return;
+          }
+          const fc = Number(info.failCount||0);
+          const tgt = Number(info.nextTarget||0);
+          if (fc > 0 && tgt > 0){
+            el.textContent = `Attempts: ${fc} / ${tgt} before a cooldown`;
+          } else if (fc > 0) {
+            el.textContent = `Attempts: ${fc}`;
+          } else {
+            el.textContent = '';
+          }
+        })
+        .withFailureHandler(function(){ el.textContent=''; })
+        .getSigninLockInfo(email);
+    }
+
+    document.getElementById('btn-forgot').onclick = function() {
+      stopInactivityTimer_();
+      const frEmail = document.getElementById('fr-email');
+      const frMsg   = document.getElementById('fr-msg');
+      const frLink  = document.getElementById('fr-link');
+      if (frEmail) frEmail.value = '';
+      if (frMsg)   frMsg.textContent = '';
+      if (frLink)  frLink.innerHTML  = '';
+      const siMsg = document.getElementById('si-msg');
+      if (siMsg) siMsg.textContent = '';
+      show('reset-request');
+    };
+
+    const btnMagic = document.getElementById('btn-magic');
+    if (btnMagic) btnMagic.onclick = function () {
+      if (__flags.waitlist) { alert('We are not live yet.'); return; }
+      const email = (document.getElementById('si-email').value || '').trim();
+      const msg = document.getElementById('ml-msg');
+      if (msg) msg.textContent = '';
+      if (!email || !/@/.test(email)) { if (msg) msg.textContent = 'Enter your email first.'; return; }
+
+      btnMagic.disabled = true;
+      google.script.run
+        .withSuccessHandler(function () {
+          if (msg) msg.textContent = 'If that email is registered we have sent a sign in link valid for about ten minutes.';
+          showBanner('info','If that email is registered we have sent a sign in link.', { persist:true });
+          btnMagic.disabled = false;
+        })
+        .withFailureHandler(function (err) {
+          btnMagic.disabled = false;
+          const t = (err && err.message) ? err.message : 'Could not send magic link.';
+          if (msg) msg.textContent = t;
+          showBanner('error', t, { scroll:true });
+        })
+        .requestMagicLink(email);
+    };
+
+    document.getElementById('form-reset-req').onsubmit = function(e){
+      if (__flags.waitlist) { alert('We are not live yet.'); return; }
+      e.preventDefault();
+      const email = document.getElementById('fr-email').value.trim();
+      const msg = document.getElementById('fr-msg');
+      if (msg) msg.textContent = '';
+      google.script.run
+        .withSuccessHandler(function(){
+          if (msg) msg.textContent = 'If that email is registered we have sent a reset link that is valid for thirty minutes.';
+          document.getElementById('fr-email').disabled = true;
+          showBanner('success','If that email is registered we have sent a reset link.', { persist:true });
+        })
+        .withFailureHandler(function(err){
+          const t = (err && err.message) ? err.message : 'Could not send reset email.';
+          if (msg) msg.textContent = t;
+          showBanner('error', t, { scroll:true });
+        })
+        .requestPinReset(email);
+    };
+    document.getElementById('fr-cancel').onclick = function(){
+      const frEmail = document.getElementById('fr-email');
+      const frMsg   = document.getElementById('fr-msg');
+      const frLink  = document.getElementById('fr-link');
+      if (frEmail) frEmail.value = '';
+      if (frMsg)   frMsg.textContent = '';
+      if (frLink)  frLink.innerHTML  = '';
+      const siMsg  = document.getElementById('si-msg');
+      const siPin  = document.getElementById('si-pin');
+      if (siMsg) siMsg.textContent = '';
+      if (siPin) siPin.value = '';
+      show('signin');
+    };
+
+    var __resetToken = '';
+    document.getElementById('form-reset-complete').onsubmit = function(e){
+      e.preventDefault();
+      const p1 = document.getElementById('rc-pin1').value.trim();
+      const p2 = document.getElementById('rc-pin2').value.trim();
+      const msg = document.getElementById('rc-msg');
+      if (msg) msg.textContent = '';
+      if (!/^[0-9]{6}$/.test(p1)) { if (msg) msg.textContent = 'PIN must be six digits.'; return; }
+      if (p1 !== p2) { if (msg) msg.textContent = 'PINs do not match.'; return; }
+
+      google.script.run
+        .withSuccessHandler(function(){
+          alert('PIN updated. Please sign in.');
+          show('signin');
+        })
+        .withFailureHandler(function(err){
+          if (msg) msg.textContent = (err && err.message) || 'Could not reset PIN.';
+        })
+        .completePinReset(__resetToken, p1);
+    };
+    document.getElementById('rc-cancel').onclick = function(){ show('signin'); };
+
+    document.getElementById('btn-logout').onclick = function() {
+      const sid = getSid();
+      google.script.run.withSuccessHandler(function() {
+        clearSid();
+        stopInactivityTimer_();
+        const em = document.getElementById('si-email'); if (em) em.value = '';
+        const pn = document.getElementById('si-pin');   if (pn) pn.value = '';
+        const sm = document.getElementById('si-msg');   if (sm) sm.textContent = '';
+        const sl = document.getElementById('si-lock');  if (sl) sl.textContent = '';
+        clearSigninCountdown_ && clearSigninCountdown_();
+        show('home');
+        showBanner('info','Logged out.');
+      }).logout(sid);
+    };
+
+    var btnRef = document.getElementById('btn-refresh-summary');
+    if (btnRef) btnRef.onclick = function(){ fetchMemberSummary_(); };
+    var rngSel = document.getElementById('summary-range');
+    if (rngSel) rngSel.addEventListener('change', fetchMemberSummary_);
+
+
+    function resetSignupWizard_() {
+      openStep_('su-step1');
+      const otp = document.getElementById('su-step-otp');
+      if (otp) otp.classList.add('hidden');
+      ['su1-msg','su2-msg','su3-msg','suotp-msg'].forEach(id=>{
+        const el = document.getElementById(id);
+        if (el) el.textContent = '';
+      });
+      const fields = ['su-first','su-last','su-birth','su-gender','su-city','su-lang','su-email','su-phone8','su-wa8','su-pref','su-referral','su-pin1','su-pin2','su-otp'];
+      fields.forEach(id=>{
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.tagName === 'SELECT') el.selectedIndex = 0;
+        else el.value = '';
+      });
+      const opt = document.getElementById('su-optin');
+      const legal = document.getElementById('su-legal');
+      if (opt) opt.checked = false;
+      if (legal) legal.checked = false;
+      __reg = { pendingId:'', method:'', expiresAtMs:0, pin:'' };
+      const waIn = document.getElementById('su-wa8');
+      const waPx = document.getElementById('su-wa-prefix');
+      if (waIn && waPx) { waPx.style.color = waIn.value.trim().length > 0 ? '#333' : '#aaa'; }
+    }
+
+    const su2Back = document.getElementById('su2-back');
+    if (su2Back) su2Back.onclick = () => openStep_('su-step1');
+    const su3Back = document.getElementById('su3-back');
+    if (su3Back) su3Back.onclick = () => openStep_('su-step2');
+    const suotpBack = document.getElementById('suotp-back');
+    if (suotpBack) suotpBack.onclick = () => openStep_('su-step3');
+
+    (function boot() {
+      enableAutoLabeling_(); /* layout only */
+      normalizeViewport();   /* ensure initial scale is one before any routing */      
+      google.script.url.getLocation(function (loc) {
+        google.script.run
+          .withSuccessHandler(function (fl) {
+            __flags.waitlist = !!(fl && fl.waitlist);
+            const btnWLHome = document.getElementById('btn-open-waitlist-home');
+            if (btnWLHome) btnWLHome.style.display = (__flags.waitlist ? '' : 'none');
+
+            if (__flags.waitlist) {
+              const btnSU = document.getElementById('btn-go-signup');
+              const btnSI = document.getElementById('btn-go-signin');
+              if (btnSU) btnSU.style.display = 'none';
+              if (btnSI) btnSI.style.display = 'none';
+              const secSignup = document.getElementById('view-signup');
+              const secSignin = document.getElementById('view-signin');
+              if (secSignup) secSignup.classList.add('hidden');
+              if (secSignin) secSignin.classList.add('hidden');
+              const home = document.getElementById('view-home');
+              if (home) {
+                const msg = document.createElement('p');
+                msg.style.marginTop = '8px';
+                msg.style.color = '#555';
+                msg.textContent = 'We are not live yet. Thanks for your interest.';
+                home.appendChild(msg);
+              }
+            }
+
+            try {
+              const params = (loc && loc.parameters) || {};
+              const magicTok = (params.magic && params.magic[0]) || '';
+              const resetTok = (params.reset && params.reset[0]) || '';
+
+              if (magicTok) {
+                stopInactivityTimer_();
+                google.script.run
+                  .withSuccessHandler(function (res) {
+                    if (res && res.ok && res.sid && res.memberId) {
+                      setSid(res.sid);
+                      document.getElementById('member-id').textContent = 'Member ID: ' + res.memberId;
+                      if (res.memberId) setMyQrFromServer_(res.memberId);
+                      normalizeViewport(); 
+                      startInactivityTimer_();
+                      show('member');
+                      fetchMemberSummary_();
+                    } else {
+                      alert('Sign in link is invalid or expired.');
+                      navigateGuarded_(getRoute_());
+                    }
+                  })
+                  .withFailureHandler(function () {
+                    alert('Could not complete sign in link.');
+                    navigateGuarded_(getRoute_());
+                  })
+                  .completeMagicSignin(magicTok);
+                return;
+              }
+
+              if (resetTok) {
+                __resetToken = resetTok;
+                stopInactivityTimer_();
+                google.script.run
+                  .withSuccessHandler(function (v) {
+                    if (v && v.ok) {
+                      const rcEmail = document.getElementById('rc-email');
+                      if (rcEmail) rcEmail.textContent = 'Account: ' + (v.email || '');
+                      show('reset-complete');
+                    } else {
+                      alert('Reset link is invalid or expired.');
+                      navigateGuarded_(getRoute_());
+                    }
+                  })
+                  .withFailureHandler(function () {
+                    alert('Could not verify reset link.');
+                    navigateGuarded_(getRoute_());
+                  })
+                  .verifyResetToken(resetTok);
+                return;
+              }
+            } catch (_) {}
+
+            try{
+              const p = loc && loc.parameters || {};
+              __utm.source   = (p.utm_source   && p.utm_source[0])   || '';
+              __utm.medium   = (p.utm_medium   && p.utm_medium[0])   || '';
+              __utm.campaign = (p.utm_campaign && p.utm_campaign[0]) || '';
+              __utm.term     = (p.utm_term     && p.utm_term[0])     || '';
+              __utm.content  = (p.utm_content  && p.utm_content[0])  || '';
+            } catch(_){}
+
+            try{
+              fetch('https://ipapi.co/json/')
+                .then(r=>r.json())
+                .then(j=>{
+                  __geo.city = (j && j.city) || '';
+                  __geo.country = (j && j.country_name) || '';
+                })
+                .catch(()=>{});
+            } catch(_){}
+
+            var target = getRoute_();
+            if (target === 'member') {
+              requireSessionThen('member');
+            } else {
+              var sid = getSid();
+              if (sid) {
+                google.script.run
+                  .withSuccessHandler(function (res) {
+                    if (res && res.ok) {
+                      if (res.sid) setSid(res.sid);
+                      document.getElementById('member-id').textContent = 'Member ID: ' + res.memberId;
+                      if (res.memberId) setMyQrFromServer_(res.memberId);
+                      normalizeViewport(); 
+                      startInactivityTimer_();
+                      show('member');
+                      fetchMemberSummary_();
+                    } else {
+                      clearSid();
+                      navigateGuarded_(target);
+                    }
+                  })
+                  .withFailureHandler(function () {
+                    clearSid();
+                    navigateGuarded_(target);
+                  })
+                  .validateSession(sid);
+              } else {
+                navigateGuarded_(target);
+              }
+            }
+          })
+          .getFlags();
       });
     })();
   </script>
 </body>
 </html>
-
-
-

@@ -889,137 +889,6 @@ File: Index.html (Admin)  with inactivity and no-flash boot fixes
         <div id="rq-msg" class="muted"></div>
       </fieldset>
 
-      <fieldset class="section card stack">
-        <legend>Live Coupons Management</legend>
-        <div class="btns">
-          <button id="btn-live-coupons-load">Load Live Coupons</button>
-        </div>
-        <div class="table-wrap">
-          <div class="table-scroll">
-            <table id="tbl-live-coupons">
-              <thead>
-                <tr>
-                  <th>Code</th>
-                  <th>MerchantId</th>
-                  <th>Mode</th>
-                  <th>Type</th>
-                  <th class="num">Value</th>
-                  <th class="num">Used</th>
-                  <th>Active</th>
-                  <th>Window</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-
-        <h4>Create/Update Coupon (Admin Direct)</h4>
-        <form id="form-create-coupon" class="stack" novalidate>
-          <label>Code
-            <input id="nc-cpn-code" placeholder="WELCOME50" required>
-          </label>
-          <label>Merchant ID
-            <input id="nc-cpn-merchant" placeholder="MRC-XXXXXX" required>
-          </label>
-          <div class="inline-3">
-            <label>Mode
-              <select id="nc-cpn-mode">
-                <option value="">(Both)</option>
-                <option value="COLLECT">COLLECT</option>
-                <option value="REDEEM">REDEEM</option>
-              </select>
-            </label>
-            <label>Type
-              <select id="nc-cpn-type" required>
-                <option value="BONUS">BONUS</option>
-                <option value="DISCOUNT">DISCOUNT</option>
-              </select>
-            </label>
-            <label>Value (points)
-              <input id="nc-cpn-value" type="number" min="1" value="50" required>
-            </label>
-          </div>
-          <div class="inline-3">
-            <label>Max Uses (0=∞)
-              <input id="nc-cpn-max" type="number" min="0" value="0">
-            </label>
-            <label>Per-Member Limit (0=∞)
-              <input id="nc-cpn-pm" type="number" min="0" value="0">
-            </label>
-            <label>Notes (optional)
-              <input id="nc-cpn-notes">
-            </label>
-          </div>
-          <div class="inline-2">
-            <label>Start Date (optional)
-              <input id="nc-cpn-start" type="date">
-            </label>
-            <label>End Date (optional)
-              <input id="nc-cpn-end" type="date">
-            </label>
-          </div>
-          <div class="btns">
-            <button type="submit" id="btn-create-cpn-direct">Create/Update Coupon</button>
-          </div>
-        </form>
-        <div id="create-cpn-msg" class="muted"></div>
-      </fieldset>
-      <!-- Coupon Requests (Merchant) -->
-      <fieldset class="section card stack">
-        <legend>Coupon Requests (Merchant)</legend>
-
-        <div class="inline-3">
-          <label>Status
-            <select id="cpnReqStatus">
-              <option value="">any</option>
-              <option value="pending" selected>pending</option>
-              <option value="approved">approved</option>
-              <option value="rejected">rejected</option>
-            </select>
-          </label>
-          <label>Merchant ID (optional)
-            <input id="cpnReqMerchant" placeholder="MRC-XXXXXX">
-          </label>
-          <label>Search (code or requestId)
-            <input id="cpnReqQuery" placeholder="contains">
-          </label>
-        </div>
-
-        <div class="btns">
-          <button id="btn-cpnreq-load">Load</button>
-        </div>
-
-        <div class="table-wrap">
-          <div class="table-scroll">
-            <table id="tbl-cpnreq">
-              <thead>
-                <tr>
-                  <th>RequestId</th>
-                  <th>MerchantId</th>
-                  <th>Code</th>
-                  <th>Mode</th>
-                  <th>Type</th>
-                  <th class="num">Value</th>
-                  <th class="num">MaxUses</th>
-                  <th class="num">PerMember</th>
-                  <th>Start</th>
-                  <th>End</th>
-                  <th>Status</th>
-                  <th>CreatedBy</th>
-                  <th>CreatedAt</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="cpnReqTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div id="cpn-req-msg" class="muted"></div>
-      </fieldset>
-
       <!-- Purge -->
       <fieldset class="section card stack">
         <legend>Purge</legend>
@@ -1380,9 +1249,7 @@ File: Index.html (Admin)  with inactivity and no-flash boot fixes
           loadAdmins_();
           loadVisibility_();
           loadCampaigns_();
-          loadRequests_(); // <-- new   
-          loadCouponRequests_(); // coupons UI
-          loadLiveCoupons_()     
+          loadRequests_(); // <-- new        
           show('admin');
           normalizeViewport();
           startInactivityTimer_();
@@ -1843,18 +1710,7 @@ File: Index.html (Admin)  with inactivity and no-flash boot fixes
     if (!id) return null;
     return (__campaignsCache || []).find(r => r.campaignId === id) || null;
   }
-
-  function isCampaignLive(row){
-    if (!row) return false;
-    const active = String(row.active).toLowerCase() !== 'false';
-    if (!active) return false;
-    const now = Date.now();
-    const s = row.startIso ? Date.parse(row.startIso) : 0;
-    const e = row.endIso   ? Date.parse(row.endIso)   : 0;
-    const inWindow = (!s || now>=s) && (!e || now<=e);
-    return inWindow;
-  }
-
+    
   function renderCampaigns_(rows){
     const tbl = document.getElementById('tbl-campaigns');
     const tb = tbl.querySelector('tbody');
@@ -1864,14 +1720,7 @@ File: Index.html (Admin)  with inactivity and no-flash boot fixes
       const imgCell = r.imageUrl
         ? `<img src="${r.imageUrl}" alt="" style="max-width:80px; max-height:60px; display:block;">`
         : '—';
-
       const tr = document.createElement('tr');
-
-      // compute 'live' BEFORE writing HTML
-      const live = isCampaignLive(r);
-      const secondLabel = live ? 'Deactivate' : 'Delete';
-      const secondStyle = live ? '' : 'background:#fee2e2; color:#991b1b;';
-
       tr.innerHTML = `
         <td>${r.campaignId}</td>
         <td>${r.merchantId}</td>
@@ -1888,146 +1737,43 @@ File: Index.html (Admin)  with inactivity and no-flash boot fixes
         <td>${r.active ? 'Yes' : 'No'}</td>
         <td>${imgCell}</td>
         <td>
-          <button class="btn-cpn-activate" data-id="${r.campaignId}" ${live ? 'disabled' : ''}>Activate</button>
-          <button class="btn-cpn-deactdel" data-id="${r.campaignId}" data-live="${live?'1':'0'}" style="${secondStyle}">${secondLabel}</button>
+          <button class="btn-cpn-toggle" data-id="${r.campaignId}" data-a="${r.active ? '0' : '1'}">${r.active ? 'Deactivate' : 'Activate'}</button>
+          <button class="btn-cpn-del" data-id="${r.campaignId}" style="background:#fee2e2; color:#991b1b;">Delete</button>
         </td>
       `;
       tb.appendChild(tr);
     });
 
     // wire buttons
-    tb.querySelectorAll('.btn-cpn-activate').forEach(btn=>{
+    tb.querySelectorAll('.btn-cpn-toggle').forEach(btn=>{
       btn.onclick = ()=>{
         const sid = sessionStorage.getItem('asid')||'';
         const id  = btn.getAttribute('data-id');
+        const a   = btn.getAttribute('data-a') === '1';
         google.script.run
-          .withSuccessHandler(()=>{ document.getElementById('btn-cpn-load').click(); showBanner('success','Campaign activated.'); })
-          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Activate failed'))
-          .adminSetCampaignActive(sid, id, true);
+          .withSuccessHandler(()=>{ document.getElementById('btn-cpn-load').click(); showBanner('success','Campaign updated.'); })
+          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Error'))
+          .adminSetCampaignActive(sid, id, a);
       };
     });
-
-    tb.querySelectorAll('.btn-cpn-deactdel').forEach(btn=>{
+    tb.querySelectorAll('.btn-cpn-del').forEach(btn=>{
       btn.onclick = ()=>{
+        const id = btn.getAttribute('data-id');
+        if (!confirm(`Delete campaign ${id}? This is permanent.`)) return;
         const sid = sessionStorage.getItem('asid')||'';
-        const id  = btn.getAttribute('data-id');
-        const live = btn.getAttribute('data-live') === '1';
-        const msg = live
-          ? `Deactivate live campaign ${id}?`
-          : `Delete campaign ${id}? This is permanent.`;
-        if (!confirm(msg)) return;
-
         google.script.run
-          .withSuccessHandler(()=>{
-            document.getElementById('btn-cpn-load').click();
-            showBanner('success', live ? 'Campaign deactivated.' : 'Campaign deleted.');
-          })
-          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Action failed'))
-          .adminDeactivateOrDeleteCampaign(sid, id);
+          .withSuccessHandler(()=>{ document.getElementById('btn-cpn-load').click(); showBanner('success','Campaign deleted.'); })
+          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Error'))
+          .adminDeleteCampaign(sid, id);
       };
     });
 
     applyResponsiveLabels_(tbl);
+
+    // Update dropdown too
     populateCampaignDropdown_(rows);
   }
 
-  function renderLiveCoupons_(rows) {
-    const tb = document.querySelector('#tbl-live-coupons tbody');
-    if (!tb) return;
-    tb.innerHTML = '';
-    (rows || []).forEach(r => {
-      const tr = document.createElement('tr');
-      const window = (r.startIso || '—') + ' → ' + (r.endIso || '—');
-      tr.innerHTML = `
-        <td>${r.code}</td>
-        <td>${r.merchantId}</td>
-        <td>${r.mode || '(Both)'}</td>
-        <td>${r.type}</td>
-        <td class="num">${Number(r.value || 0).toLocaleString()}</td>
-        <td class="num">${Number(r.usedCount || 0).toLocaleString()}</td>
-        <td>${r.active ? 'Yes' : 'No'}</td>
-        <td>${window}</td>
-        <td>
-          <button class="btn-live-cpn-toggle" data-c="${r.code}" data-m="${r.merchantId}" data-a="${r.active ? '0' : '1'}">
-            ${r.active ? 'Deactivate' : 'Activate'}
-          </button>
-          <button class="btn-live-cpn-del" data-c="${r.code}" data-m="${r.merchantId}" style="background:#fee2e2; color:#991b1b;">Delete</button>
-        </td>
-      `;
-      tb.appendChild(tr);
-    });
-    // Wire toggle button
-    tb.querySelectorAll('.btn-live-cpn-toggle').forEach(btn => {
-      btn.onclick = () => {
-        const sid = sessionStorage.getItem('asid') || '';
-        const code = btn.getAttribute('data-c');
-        const mid = btn.getAttribute('data-m');
-        const active = btn.getAttribute('data-a') === '1';
-        if (!confirm(`Are you sure you want to ${active ? 'Activate' : 'Deactivate'} coupon ${code} for ${mid}?`)) return;
-        google.script.run
-          .withSuccessHandler(() => { loadLiveCoupons_(); showBanner('success', 'Coupon status updated.'); })
-          .withFailureHandler(err => showBanner('error', (err && err.message) || 'Error'))
-          .adminSetCouponActiveStatus(sid, code, mid, active);
-      };
-    });
-    // Wire delete button
-    tb.querySelectorAll('.btn-live-cpn-del').forEach(btn => {
-      btn.onclick = () => {
-        const sid = sessionStorage.getItem('asid') || '';
-        const code = btn.getAttribute('data-c');
-        const mid = btn.getAttribute('data-m');
-        if (!confirm(`Are you SURE you want to DELETE coupon ${code} for ${mid}? This is permanent.`)) return;
-        google.script.run
-          .withSuccessHandler(() => { loadLiveCoupons_(); showBanner('success', 'Coupon deleted.'); })
-          .withFailureHandler(err => showBanner('error', (err && err.message) || 'Error'))
-          .adminDeleteCoupon(sid, code, mid);
-      };
-    });
-    applyResponsiveLabels_(document.getElementById('tbl-live-coupons'));
-  }
-
-  function loadLiveCoupons_() {
-    const sid = sessionStorage.getItem('asid') || '';
-    google.script.run
-      .withSuccessHandler(renderLiveCoupons_)
-      .withFailureHandler(err => showBanner('error', (err && err.message) || 'Error loading live coupons'))
-      .adminListLiveCoupons(sid);
-  }
-
-  document.getElementById('btn-live-coupons-load').onclick = loadLiveCoupons_;
-
-  // Wire the Direct Creation Form
-  document.getElementById('form-create-coupon').onsubmit = (e) => {
-    e.preventDefault();
-    const sid = sessionStorage.getItem('asid') || '';
-    const payload = {
-      code: document.getElementById('nc-cpn-code').value.trim(),
-      merchantId: document.getElementById('nc-cpn-merchant').value.trim(),
-      mode: document.getElementById('nc-cpn-mode').value,
-      type: document.getElementById('nc-cpn-type').value,
-      value: document.getElementById('nc-cpn-value').value,
-      maxUses: document.getElementById('nc-cpn-max').value,
-      perMemberLimit: document.getElementById('nc-cpn-pm').value,
-      startIso: document.getElementById('nc-cpn-start').value,
-      endIso: document.getElementById('nc-cpn-end').value,
-      notes: document.getElementById('nc-cpn-notes').value,
-    };
-    const msg = document.getElementById('create-cpn-msg');
-    msg.textContent = '';
-
-    google.script.run
-      .withSuccessHandler(res => {
-        msg.textContent = `Coupon ${res.code} ${res.upserted.updated ? 'updated' : 'created'}.`;
-        document.getElementById('form-create-coupon').reset();
-        loadLiveCoupons_();
-        showBanner('success', msg.textContent);
-      })
-      .withFailureHandler(err => {
-        msg.textContent = (err && err.message) || 'Error creating/updating coupon.';
-        showBanner('error', msg.textContent);
-      })
-      .adminCreateCoupon(sid, payload);
-  };
   function loadCampaigns_(){
     const sid = sessionStorage.getItem('asid')||'';
     const opts = {
@@ -2208,13 +1954,8 @@ File: Index.html (Admin)  with inactivity and no-flash boot fixes
         const id = btn.getAttribute('data-id');
         if (!confirm(`Approve request ${id}?`)) return;
         google.script.run
-          .withSuccessHandler(res=>{
-            loadRequests_();
-            loadCampaigns_(); // refresh live campaigns too (new/edit/deactivate/delete)
-            const lcid = res && res.linkedCampaignId ? (' Linked: ' + res.linkedCampaignId) : '';
-            showBanner('success','Request approved.' + lcid);
-          })
-          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Approve failed'))
+          .withSuccessHandler(()=>{ loadRequests_(); showBanner('success','Request approved.'); })
+          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Error'))
           .adminApproveCampaignRequest(sid, id);
       };
     });
@@ -2251,113 +1992,6 @@ File: Index.html (Admin)  with inactivity and no-flash boot fixes
 
   const __btnRqLoad = document.getElementById('btn-rq-load');
   if (__btnRqLoad) __btnRqLoad.onclick = loadRequests_;
-
-  // ===== COUPON REQUESTS =====
-  function _encJson(o){ return encodeURIComponent(JSON.stringify(o||{})); }
-  function _decJson(s){ try { return JSON.parse(decodeURIComponent(String(s||''))); } catch(_){ return {}; } }
-
-  function renderCouponRequests_(rows){
-    const tb = document.getElementById('cpnReqTableBody');
-    const tbl = document.getElementById('tbl-cpnreq');
-    const msg = document.getElementById('cpn-req-msg');
-    tb.innerHTML = '';
-    (rows||[]).forEach(r=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${r.requestId}</td>
-        <td>${r.merchantId}</td>
-        <td>${r.code}</td>
-        <td>${r.mode||''}</td>
-        <td>${r.type||''}</td>
-        <td class="num">${Number(r.value||0).toLocaleString()}</td>
-        <td class="num">${Number(r.maxUses||0).toLocaleString()}</td>
-        <td class="num">${Number(r.perMemberLimit||0).toLocaleString()}</td>
-        <td>${r.startIso||'—'}</td>
-        <td>${r.endIso||'—'}</td>
-        <td>${r.status}</td>
-        <td>${r.createdBy||''}</td>
-        <td>${r.createdAt||''}</td>
-        <td>
-          ${r.status==='pending' ? `
-            <button class="btn-cpn-approve" data-id="${r.requestId}">Approve</button>
-            <button class="btn-cpn-approve-ovr" data-id="${r.requestId}" data-row="${_encJson(r)}">Approve + Edit</button>
-            <button class="btn-cpn-reject" data-id="${r.requestId}" style="background:#fee2e2; color:#991b1b;">Reject</button>
-          ` : '—'}
-        </td>
-      `;
-      tb.appendChild(tr);
-    });
-
-    tb.querySelectorAll('.btn-cpn-approve').forEach(btn=>{
-      btn.onclick = ()=>{
-        const sid = sessionStorage.getItem('asid')||'';
-        const id = btn.getAttribute('data-id');
-        if (!confirm(`Approve coupon request ${id}?`)) return;
-        google.script.run
-          .withSuccessHandler(res=>{ showBanner('success', `Coupon approved: ${res.code}`); loadCouponRequests_(); })
-          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Approve failed'))
-          .adminApproveCouponRequest(sid, id, null);
-      };
-    });
-
-    tb.querySelectorAll('.btn-cpn-approve-ovr').forEach(btn=>{
-      btn.onclick = ()=>{
-        const sid = sessionStorage.getItem('asid')||'';
-        const id = btn.getAttribute('data-id');
-        const row = _decJson(btn.getAttribute('data-row'));
-        // minimal prompt-based override
-        const ovr = {};
-        const ask = (label, def) => prompt(label, def==null?'':String(def));
-        const mode = ask('Mode (COLLECT/REDEEM or blank)', row.mode||'');
-        if (mode) ovr.mode = mode.toUpperCase();
-        const type = ask('Type (BONUS/DISCOUNT)', row.type||'BONUS');
-        if (type) ovr.type = type.toUpperCase();
-        const value = Number(ask('Value (>0)', row.value||0)); if (!isNaN(value)&&value>0) ovr.value=value;
-        const maxUses = Number(ask('Max Uses (0=unlimited)', row.maxUses||0)); if (!isNaN(maxUses)) ovr.maxUses=maxUses;
-        const perMember = Number(ask('Per-member limit (0=unlimited)', row.perMemberLimit||0)); if (!isNaN(perMember)) ovr.perMemberLimit=perMember;
-        const startIso = ask('Start ISO (optional)', row.startIso||''); if (startIso) ovr.startIso=startIso;
-        const endIso = ask('End ISO (optional)', row.endIso||''); if (endIso) ovr.endIso=endIso;
-        const notes = ask('Decision notes (optional)', 'Approved w/ override'); if (notes) ovr.decisionNotes=notes;
-
-        google.script.run
-          .withSuccessHandler(res=>{ showBanner('success', `Coupon approved (overridden): ${res.code}`); loadCouponRequests_(); })
-          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Approve+Edit failed'))
-          .adminApproveCouponRequest(sid, id, ovr);
-      };
-    });
-
-    tb.querySelectorAll('.btn-cpn-reject').forEach(btn=>{
-      btn.onclick = ()=>{
-        const sid = sessionStorage.getItem('asid')||'';
-        const id = btn.getAttribute('data-id');
-        const reason = prompt('Reason (optional):','');
-        google.script.run
-          .withSuccessHandler(()=>{ showBanner('success','Request rejected'); loadCouponRequests_(); })
-          .withFailureHandler(err=> showBanner('error', (err&&err.message)||'Reject failed'))
-          .adminRejectCouponRequest(sid, id, reason||'');
-      };
-    });
-
-    applyResponsiveLabels_(tbl);
-    if (msg) msg.textContent = `${(rows||[]).length} requests`;
-  }
-
-  function loadCouponRequests_(){
-    const sid = sessionStorage.getItem('asid')||'';
-    const filters = {
-      status: (document.getElementById('cpnReqStatus')?.value||'').trim().toLowerCase(),
-      merchantId: (document.getElementById('cpnReqMerchant')?.value||'').trim().toUpperCase(),
-      q: (document.getElementById('cpnReqQuery')?.value||'').trim().toLowerCase()
-    };
-    const msg = document.getElementById('cpn-req-msg'); if (msg) msg.textContent = 'Loading...';
-    google.script.run
-      .withSuccessHandler(rows => renderCouponRequests_(rows || []))
-      .withFailureHandler(err => { const t=(err&&err.message)||'Error'; if (msg) msg.textContent=t; showBanner('error', t); })
-      .adminListCouponRequests(sid, filters);
-  }
-
-  const __btnCpnReqLoad = document.getElementById('btn-cpnreq-load');
-  if (__btnCpnReqLoad) __btnCpnReqLoad.onclick = loadCouponRequests_;
 
   $('btn-purge-user-sessions').onclick = () => {
     const sid = sessionStorage.getItem('asid')||'';
@@ -2699,9 +2333,7 @@ File: Index.html (Admin)  with inactivity and no-flash boot fixes
           loadAdmins_();
           loadVisibility_();
           loadCampaigns_();
-          loadRequests_(); // <-- new    
-          loadCouponRequests_(); // coupons UI   
-          loadLiveCoupons_() 
+          loadRequests_(); // <-- new        
           startInactivityTimer_();
           enableAutoLabeling_();
           showBanner('info', 'Session restored.');

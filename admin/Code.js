@@ -1,4 +1,4 @@
-﻿// ===============================
+// ===============================
 // File: Code.gs  (Admin App)
 // ===============================
 
@@ -148,8 +148,6 @@ function getMasterAdminUsername_(){ return String(ASP.getProperty('MASTER_ADMIN_
 
 function adminMasterSendSelfResetLink(sid){
   const caller = ensureAdminActive_(sid);
-ensureCampaignsShape_();
-ensureCampaignsShape_();
   if (!isMasterAdminCaller_(caller.username)) throw new Error('Only master admin can request this link.');
   const email = getMasterAdminEmail_();
   if (!email) throw new Error('Master admin email not configured.');
@@ -937,7 +935,6 @@ function adminCreateCampaign(sid, payload){
 
   const { campaigns } = getUserDb_();
   const id = _genCampaignId_();
-  ensureCampaignsShape_(); // <<< NEWensureCampaignsShape_();ensureCampaignsShape_();
   campaigns.appendRow([
     id, merchantId, title, type, multiplier,
     startIso, endIso, minSpend, maxRed, maxPerCustomer, budgetCap,
@@ -948,7 +945,6 @@ function adminCreateCampaign(sid, payload){
 
 function adminListCampaigns(sid, opts){
   ensureAdminActive_(sid);
-  ensureCampaignsShape_(); // <<< NEW
   const { campaigns } = getUserDb_();
   const last = campaigns.getLastRow();
   if (last < 2) return [];
@@ -1101,59 +1097,42 @@ function adminApproveCampaignRequest(sid, requestId){
   const caller = ensureAdminActive_(sid);
   const { campaignRequests, campaigns, logs } = getUserDb_();
 
-  // find request row
   const r = findRowByColumn_(campaignRequests, 1, requestId);
   if (!r) throw new Error('Request not found.');
-
-  // header index + strict column fetcher
   const idx = adminHeaderIdx_(campaignRequests);
-  const col = (name) => _colOrThrow_(idx, name); // throws if missing
 
-  // guard: status must be pending
-  const cStatus = col('Status');
-  const status = String(campaignRequests.getRange(r, cStatus).getValue() || '').toLowerCase();
+  const status = String(campaignRequests.getRange(r, idx['Status']).getValue()||'').toLowerCase();
   if (status !== 'pending') throw new Error('Only pending requests can be approved.');
 
-  // helpers for required / optional columns
-  const reqCol = (name) => _colOrThrow_(idx, name);
-  const optCol = (name) => idx[name] || 0;
-  const getReq = (name) => campaignRequests.getRange(r, reqCol(name)).getValue();
-  const getOpt = (name, def) => {
-    const c = optCol(name);
-    return c ? campaignRequests.getRange(r, c).getValue() : (typeof def === 'undefined' ? '' : def);
-  };
+  const get = (k)=> campaignRequests.getRange(r, idx[k]).getValue();
 
-  // build payload (required via getReq, optional via getOpt)
   const payload = {
-    merchantId: String(getReq('MerchantId') || '').trim().toUpperCase(),
-    title: String(getReq('Title') || '').trim(),
-    multiplier: Number(getReq('Multiplier') || 1),
-    startIso: String(getReq('StartIso') || '').trim(),
-    endIso: String(getReq('EndIso') || '').trim(),
-    minSpend: Number(getOpt('MinSpend') || 0),
-    maxRedemptions: Number(getOpt('MaxRedemptions') || 0),
-    maxPerCustomer: Number(getOpt('MaxPerCustomer') || 0),
-    budgetCap: Number(getOpt('BudgetCap') || 0),
-    billingModel: _sanitizeBillingModel_(getOpt('BillingModel') || 'per_redemption'),
-    costPerRedemption: Number(getOpt('CostPerRedemption') || 0),
-    notes: String(getOpt('Notes') || '').trim(),
-    imageUrl: String(getOpt('ImageUrl') || '').trim()
+    merchantId: String(get('MerchantId')||'').trim().toUpperCase(),
+    title: String(get('Title')||'').trim(),
+    multiplier: Number(get('Multiplier')||1),
+    startIso: String(get('StartIso')||'').trim(),
+    endIso: String(get('EndIso')||'').trim(),
+    minSpend: Number(get('MinSpend')||0),
+    maxRedemptions: Number(get('MaxRedemptions')||0),
+    maxPerCustomer: Number(get('MaxPerCustomer')||0),
+    budgetCap: Number(get('BudgetCap')||0),
+    billingModel: _sanitizeBillingModel_(get('BillingModel')),
+    costPerRedemption: Number(get('CostPerRedemption')||0),
+    notes: String(get('Notes')||'').trim(),
+    imageUrl: String(get('ImageUrl')||'').trim()
   };
-
-  const reqType = _sanitizeReqType_(String(getReq('RequestType') || 'new'));
+  const reqType = _sanitizeReqType_(get('RequestType'));
   const nowIso = _nowIso_();
 
-  // linked campaign (optional on new/renew, required on edit/deactivate)
-  let linkedCampaignId = String(getOpt('LinkedCampaignId') || '').trim();
-
-  if (reqType === 'deactivate') {
+  let linkedCampaignId = String(get('LinkedCampaignId')||'').trim();
+  if (reqType === 'deactivate'){
+    linkedCampaignId = linkedCampaignId || String(get('LinkedCampaignId')||'').trim();
     if (!linkedCampaignId) throw new Error('Deactivate request missing LinkedCampaignId.');
-    // new behavior: if it’s currently live, deactivate; if not live/expired, delete
     adminDeactivateOrDeleteCampaign(sid, linkedCampaignId);
-
-  } else if (reqType === 'edit') {
+  } else if (reqType === 'edit'){
+    // Update an existing campaign
+    linkedCampaignId = linkedCampaignId || String(get('LinkedCampaignId')||'').trim();
     if (!linkedCampaignId) throw new Error('Edit request missing LinkedCampaignId.');
-    // update existing
     adminUpdateCampaign(sid, linkedCampaignId, {
       title: payload.title,
       multiplier: payload.multiplier,
@@ -1166,14 +1145,13 @@ function adminApproveCampaignRequest(sid, requestId){
       billingModel: payload.billingModel,
       costPerRedemption: payload.costPerRedemption
     });
-    // optional image copy
-    if (payload.imageUrl) {
+    // optional image copy if provided
+    if (payload.imageUrl){
       const cIdx = adminHeaderIdx_(campaigns);
       const cr = findRowByColumn_(campaigns, 1, linkedCampaignId);
       if (cr && cIdx['ImageUrl']) campaigns.getRange(cr, cIdx['ImageUrl']).setValue(payload.imageUrl);
       if (cr && cIdx['UpdatedAt']) campaigns.getRange(cr, cIdx['UpdatedAt']).setValue(nowIso);
     }
-
   } else {
     // 'new' or 'renew' => create a fresh campaign
     const created = adminCreateCampaign(sid, {
@@ -1192,8 +1170,8 @@ function adminApproveCampaignRequest(sid, requestId){
     });
     linkedCampaignId = created.campaignId;
 
-    // optional image copy
-    if (payload.imageUrl && linkedCampaignId) {
+    // copy image if provided
+    if (payload.imageUrl && linkedCampaignId){
       const cIdx = adminHeaderIdx_(campaigns);
       const cr = findRowByColumn_(campaigns, 1, linkedCampaignId);
       if (cr && cIdx['ImageUrl']) campaigns.getRange(cr, cIdx['ImageUrl']).setValue(payload.imageUrl);
@@ -1201,17 +1179,14 @@ function adminApproveCampaignRequest(sid, requestId){
     }
   }
 
-  // mark request Approved (use strict col lookups to avoid null errors)
-  campaignRequests.getRange(r, cStatus).setValue('approved');
-  campaignRequests.getRange(r, col('DecisionBy')).setValue(caller.username);
-  campaignRequests.getRange(r, col('DecisionAt')).setValue(nowIso);
-  if (idx['LinkedCampaignId']) campaignRequests.getRange(r, idx['LinkedCampaignId']).setValue(linkedCampaignId || '');
+  // mark request Approved
+  campaignRequests.getRange(r, idx['Status']).setValue('approved');
+  campaignRequests.getRange(r, idx['DecisionBy']).setValue(caller.username);
+  campaignRequests.getRange(r, idx['DecisionAt']).setValue(nowIso);
+  if (idx['LinkedCampaignId']) campaignRequests.getRange(r, idx['LinkedCampaignId']).setValue(linkedCampaignId||'');
   if (idx['UpdatedAt']) campaignRequests.getRange(r, idx['UpdatedAt']).setValue(nowIso);
 
-  try {
-    logs.appendRow([nowIso, 'admin_request_approve', JSON.stringify({ requestId, linkedCampaignId })]);
-  } catch (_){}
-
+  try { logs.appendRow([nowIso, 'admin_request_approve', JSON.stringify({ requestId, linkedCampaignId })]); } catch(_){}
   return { ok:true, requestId, linkedCampaignId };
 }
 
@@ -1369,9 +1344,9 @@ function adminListCouponRequests(sid, opts){
   const wantMid = String(f.merchantId||'').trim().toUpperCase();
   const q = String(f.q||'').toLowerCase();
 
-  return vals.map((r) => {
+  return vals.map(r => {
     const g = (k)=> r[(_colOrThrow_(idx,k))-1];
-    return {
+    const row = {
       requestId: String(g('RequestId')||''),
       merchantId: String(g('MerchantId')||''),
       code: String(g('Code')||''),
@@ -1387,9 +1362,9 @@ function adminListCouponRequests(sid, opts){
       createdBy: String(g('CreatedBy')||''),
       createdAt: String(g('CreatedAt')||''),
       updatedAt: String(g('UpdatedAt')||''),
-      decisionBy: String(g('DecisionBy')||''),
-      decisionAt: String(g('DecisionAt')||'')
+      decisionBy: String(couponRequests.getRange(2, _colOrThrow_(idx,'DecisionBy'), 1,1).getValue()||'') // tolerate missing historical
     };
+    return row;
   }).filter(x =>
     (!wantStatus || x.status.toLowerCase() === wantStatus) &&
     (!wantMid || x.merchantId.toUpperCase() === wantMid) &&
@@ -1551,18 +1526,21 @@ function getAppVersion_() {
   }
 }
 
-// --- Replace the existing getUserDb_ function entirely ---
 function getUserDb_() {
   const id = ASP.getProperty(USER_DB_ID_KEY);
   if (!id) throw new Error('USER_DB_ID is not set. Use the Config panel to set it.');
   const ss = SpreadsheetApp.openById(id);
+
   const merchants   = ensureSheet_(ss, 'Merchants',    ['MerchantId','Name','Active','Secret','CreatedAt']);
   const tx          = ensureSheet_(ss, 'Transactions', ['TxId','MemberId','MerchantId','Type','Points','AtMs','Staff']);
   const balances    = ensureSheet_(ss, 'Balances',     ['MemberId','Points']);
+  // Note: 'Mode' may be blank for neutral QR deep links
   const linkTokens  = ensureSheet_(ss, 'LinkTokens',   ['Token','MemberId','Mode','ExpiresAtMs','Used','CreatedAt']);
+
   const sessions    = ensureSheet_(ss, 'Sessions',     ['SID','Email','LastSeenMs','CreatedAt']);
   const logs        = ensureSheet_(ss, 'Logs',         ['At','Type','Message']);
   const resetTokens = ensureSheet_(ss, 'ResetTokens',  ['Token','Email','ExpiresAtMs','Used','CreatedAt','VerifiedAtMs']);
+
   // ── Coupons ──
   const coupons     = ensureSheet_(ss, 'Coupons', [
     'Code','MerchantId','Mode','Type','Value','MaxUses','UsedCount','PerMemberLimit',
@@ -1574,23 +1552,19 @@ function getUserDb_() {
     'MaxUses','PerMemberLimit','StartIso','EndIso','Notes',
     'Status','CreatedBy','CreatedAt','UpdatedAt',
     'DecisionBy','DecisionAt','DecisionNotes'
-  ]);
+  ]);  
+
   // ── NEW: Campaigns analytics ──
   const campaigns   = ensureSheet_(ss, 'Campaigns', [
     'CampaignId','MerchantId','Title','Type','Multiplier',
-    'StartIso','EndIso','MinSpend','MaxRedemptions','MaxPerCustomer',
-    'BudgetCap','BillingModel','CostPerRedemption','Active','CreatedAt',
-    'UpdatedAt','ImageUrl',
-    // --- ADDED NEW FIELDS (Problem 1 Fix) ---
-    'PerMemberRedemptions', 'PerMemberBonusCap'
+    'StartIso','EndIso','MinSpend','MaxRedemptions','MaxPerCustomer','BudgetCap',
+    'BillingModel','CostPerRedemption','Active','CreatedAt','UpdatedAt',
+    'ImageUrl'
   ]);
-
-  // <<< NEW: heal header drift now
 
   const CampaignActivations = ensureSheet_(ss, 'CampaignActivations', [
     'ActivationId','CampaignId','MemberId','ActivatedAtMs','ExpiresAtMs','Source','Notes'
   ]);
-ensureCampaignsShape_();
   const CampaignRedemptions = ensureSheet_(ss, 'CampaignRedemptions', [
     'RedemptionId','CampaignId','MemberId','MerchantId','TxId','AtMs',
     'BasePoints','Multiplier','BonusPoints','CostAccrued'
@@ -1598,13 +1572,12 @@ ensureCampaignsShape_();
   // ── NEW: Merchant Campaign Requests ──
   const campaignRequests = ensureSheet_(ss, 'CampaignRequests', [
     'RequestId','MerchantId','RequestType','Title','Multiplier',
-    'StartIso','EndIso','MinSpend','MaxRedemptions','MaxPerCustomer',
-    'BudgetCap','BillingModel','CostPerRedemption','Notes','ImageUrl',
-    'Status','CreatedBy','CreatedAt','UpdatedAt','DecisionBy','DecisionAt',
-    'DecisionNotes','LinkedCampaignId',
-    // --- ADDED NEW FIELDS (Problem 1 Fix) ---
-    'PerMemberRedemptions', 'PerMemberBonusCap'
+    'StartIso','EndIso','MinSpend','MaxRedemptions','MaxPerCustomer','BudgetCap',
+    'BillingModel','CostPerRedemption','Notes','ImageUrl',
+    'Status','CreatedBy','CreatedAt','UpdatedAt',
+    'DecisionBy','DecisionAt','DecisionNotes','LinkedCampaignId'
   ]);
+
   return {
     ss, merchants, tx, balances, linkTokens, sessions, logs, resetTokens,
     coupons, cpnUses, couponRequests,
@@ -1636,8 +1609,6 @@ function ensureSheet_(ss, name, headers) {
   }
   return sh;
 }
-
-
 function protectAllSheetHeaders_(ss, warningOnly) {
   const sheets = ss.getSheets();
   const me = Session.getActiveUser().getEmail() || null;
@@ -1658,47 +1629,6 @@ function protectAllSheetHeaders_(ss, warningOnly) {
     }
   });
 }
-
-// Inserts missing "MaxPerCustomer" after "MaxRedemptions" and standardizes headers.
-function ensureCampaignsShape_() {
-  const { ss } = getUserDb_();
-  const sh = ss.getSheetByName('Campaigns');
-  if (!sh) return;
-
-  var CANON = [
-    'CampaignId','MerchantId','Title','Type','Multiplier',
-    'StartIso','EndIso','MinSpend','MaxRedemptions','MaxPerCustomer',
-    'BudgetCap','BillingModel','CostPerRedemption','Active',
-    'CreatedAt','UpdatedAt','ImageUrl',
-    'PerMemberRedemptions','PerMemberBonusCap'
-  ];
-
-  var lastCol = Math.max(sh.getLastColumn(), CANON.length);
-  var hdr = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
-
-  var idxMaxRed = hdr.indexOf('MaxRedemptions');
-  var hasMaxPer = hdr.indexOf('MaxPerCustomer') !== -1;
-  if (idxMaxRed !== -1 && !hasMaxPer) {
-    sh.insertColumnAfter(idxMaxRed + 1); // 1-based in GAS
-  }
-
-  sh.getRange(1, 1, 1, CANON.length).setValues([CANON]);
-
-  var curLast = sh.getLastColumn();
-  if (curLast > CANON.length) {
-    sh.deleteColumns(CANON.length + 1, curLast - CANON.length);
-  }
-
-  try {
-    sh.getProtections(SpreadsheetApp.ProtectionType.RANGE).forEach(p => {
-      const r = p.getRange();
-      if (r.getRow() === 1 && r.getNumRows() === 1) p.remove();
-    });
-    const pr = sh.getRange(1, 1, 1, sh.getLastColumn()).protect().setDescription('Header row protected by Admin App');
-    pr.setWarningOnly(true);
-  } catch (_) {}
-}
-
 function findRowByColumn_(sh, colIndex, value) {
   const last = sh.getLastRow();
   if (last < 2) return 0;
@@ -2249,119 +2179,4 @@ function hashPin_(pin) {
   return bytes.map(b => (b + 256) % 256).map(b => ('0' + b.toString(16)).slice(-2)).join('');
 }
 function genSid_() { return 's_' + Utilities.getUuid().replace(/-/g,''); }
-
-// --- Add these functions to the bottom of Admin App - Code.gs ---
-
-/**
- * Directly creates or updates a coupon, bypassing the Merchant Request process.
- * Used by Admin for manual setup or override. (Problem 2 Fix)
- */
-function adminCreateCoupon(sid, payload) {
-  ensureAdminActive_(sid);
-  const { coupons } = getUserDb_();
-
-  const p = payload || {};
-  const code = String(p.code||'').trim();
-  const merchantId = String(p.merchantId||'').trim().toUpperCase();
-  const mode = String(p.mode||'').toUpperCase();
-  const type = String(p.type||'').toUpperCase();
-  const value = Math.max(1, Number(p.value||0));
-  const maxUses = Math.max(0, Number(p.maxUses||0));
-  const perMemberLimit = Math.max(0, Number(p.perMemberLimit||0));
-  const startIso = String(p.startIso||'').trim();
-  const endIso = String(p.endIso||'').trim();
-  const notes = String(p.notes||'');
-
-  if (!/^[A-Za-z0-9._-]{3,32}$/.test(code)) throw new Error('Invalid code (A-Z, 0-9, . , _, - 3 to 32 chars).');
-  if (!merchantId) throw new Error('Merchant ID required.');
-  if (mode && mode !== 'COLLECT' && mode !== 'REDEEM') throw new Error('Invalid mode.');
-  if (type !== 'BONUS' && type !== 'DISCOUNT') throw new Error('Invalid type.');
-  if (value <= 0) throw new Error('Value must be > 0.');
-  if ((startIso && isNaN(Date.parse(startIso))) || (endIso && isNaN(Date.parse(endIso)))) throw new Error('Invalid dates.');
-
-  const wrote = _upsertCouponFromPayload_(coupons, {
-    code, merchantId, mode, type, value, maxUses, perMemberLimit, startIso, endIso, notes
-  });
-  
-  try { 
-    const { logs } = getUserDb_();
-    logs.appendRow([new Date().toISOString(), 'admin_coupon_created', JSON.stringify({ code, merchantId, action: (wrote.updated?'updated':'created') })]); 
-  } catch(_){}
-
-  return { ok: true, code, upserted: wrote };
-}
-
-function adminListLiveCoupons(sid) {
-  ensureAdminActive_(sid);
-  const { coupons } = getUserDb_();
-  const last = coupons.getLastRow();
-  if (last < 2) return [];
-  const cols = Math.max(13, coupons.getLastColumn() || 13);
-  const vals = coupons.getRange(2, 1, last - 1, cols).getValues();
-
-  return vals.map(r => ({
-    code: String(r[0] || ''),
-    merchantId: String(r[1] || ''),
-    mode: String(r[2] || ''),
-    type: String(r[3] || ''),
-    value: Number(r[4] || 0),
-    maxUses: Number(r[5] || 0),
-    usedCount: Number(r[6] || 0),
-    perMemberLimit: Number(r[7] || 0),
-    startIso: String(r[8] || ''),
-    endIso: String(r[9] || ''),
-    active: String(r[10]).toLowerCase() !== 'false',
-    createdAt: String(r[11] || ''),
-    notes: String(r[12] || '')
-  }));
-}
-
-function adminSetCouponActiveStatus(sid, code, merchantId, active) {
-  ensureAdminActive_(sid);
-  const { coupons } = getUserDb_();
-  const r = findCouponRowByCodeAndMid_(coupons, code, merchantId);
-  if (!r) throw new Error(`Coupon ${code} for ${merchantId} not found.`);
-  
-  coupons.getRange(r, 11).setValue(!!active); // Active is column 11
-
-  try { 
-    const { logs } = getUserDb_();
-    logs.appendRow([new Date().toISOString(), 'admin_coupon_active_toggle', JSON.stringify({ code, merchantId, active })]); 
-  } catch(_){}
-
-  return { ok: true };
-}
-
-function adminDeleteCoupon(sid, code, merchantId) {
-  ensureAdminActive_(sid);
-  const { coupons } = getUserDb_();
-  const r = findCouponRowByCodeAndMid_(coupons, code, merchantId);
-  if (!r) throw new Error(`Coupon ${code} for ${merchantId} not found.`);
-  
-  coupons.deleteRow(r);
-
-  try { 
-    const { logs } = getUserDb_();
-    logs.appendRow([new Date().toISOString(), 'admin_coupon_deleted', JSON.stringify({ code, merchantId })]); 
-  } catch(_){}
-  
-  return { ok: true };
-}
-
-/** Helper function for finding coupon by Code AND MerchantId (required for uniqueness) */
-function findCouponRowByCodeAndMid_(couponsSheet, code, merchantId) {
-  const last = couponsSheet.getLastRow();
-  if (last < 2) return 0;
-  const vals = couponsSheet.getRange(2, 1, last - 1, 2).getValues(); // Code, MerchantId
-  const targetCode = String(code || '');
-  const targetMid = String(merchantId || '');
-
-  for (let i = 0; i < vals.length; i++) {
-    if (String(vals[i][0]) === targetCode && String(vals[i][1]) === targetMid) {
-      return 2 + i;
-    }
-  }
-  return 0;
-}
-
 
