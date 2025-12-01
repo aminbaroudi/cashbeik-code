@@ -889,6 +889,156 @@ File: Index.html (Admin)  with inactivity and no-flash boot fixes
         <div id="rq-msg" class="muted"></div>
       </fieldset>
 
+      <!-- =============================== -->
+      <!-- COUPONS (Merchant-wide)         -->
+      <!-- Mirrors the Campaigns section   -->
+      <!-- =============================== -->
+
+      <hr>
+      <h3>Coupons (Merchant-wide)</h3>
+
+      <div style="margin:8px 0;">
+        <label>Search (title or ID)</label>
+        <input id="couponSearchText" placeholder="e.g., Welcome10 or cpn_12345">
+        <label style="margin-left:12px;">Merchant ID (optional filter)</label>
+        <input id="couponFilterMerchantId" placeholder="e.g., merch_001">
+        <button id="btnLoadCoupons" onclick="uiLoadCoupons()">Load</button>
+        <button onclick="uiRefreshCoupons()">Refresh list</button>
+      </div>
+
+      <div id="couponSelectedBlock" style="border:1px solid #ccc;padding:8px;margin:12px 0;display:none;">
+        <h4>Selected Coupon</h4>
+        <div>Id: <span id="couponSelectedId">—</span> · <span id="couponSelectedTitle">—</span></div>
+        <div>Merchant <code id="couponSelectedMerchant">—</code></div>
+        <div>Value <span id="couponSelectedValue">—</span></div>
+        <div>Start <span id="couponSelectedStart">—</span> · End <span id="couponSelectedEnd">—</span></div>
+        <div>Min <span id="couponSelectedMin">—</span> · MaxRed <span id="couponSelectedMaxRed">—</span> · Max/Customer <span id="couponSelectedMaxPer">—</span> · Budget <span id="couponSelectedBudget">—</span></div>
+        <div>Active <span id="couponSelectedActive">—</span></div>
+      </div>
+
+      <table id="couponsTable" border="1" cellpadding="4" cellspacing="0" style="width:100%;max-width:100%;table-layout:auto;">
+        <thead>
+          <tr>
+            <th>CouponId</th>
+            <th>MerchantId</th>
+            <th>Title</th>
+            <th>Value</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Min</th>
+            <th>MaxRed</th>
+            <th>Max/Customer</th>
+            <th>Budget</th>
+            <th>Active</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="couponsTbody">
+          <!-- filled by JS -->
+        </tbody>
+      </table>
+
+      <h4 style="margin-top:16px;">Create New Coupon</h4>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:8px;max-width:1200px;">
+        <div>
+          <label>Merchant ID</label>
+          <input id="couponCreateMerchantId" placeholder="merch_001">
+        </div>
+        <div>
+          <label>Title</label>
+          <input id="couponCreateTitle" placeholder="Welcome10">
+        </div>
+        <div>
+          <label>Value</label>
+          <input id="couponCreateValue" placeholder="e.g., 10 (percent or fixed per your backend)">
+        </div>
+        <div>
+          <label>Start Date</label>
+          <input id="couponCreateStart" type="date">
+        </div>
+        <div>
+          <label>End Date</label>
+          <input id="couponCreateEnd" type="date">
+        </div>
+        <div>
+          <label>Min Spend (optional)</label>
+          <input id="couponCreateMinSpend" placeholder="0">
+        </div>
+        <div>
+          <label>Max Redemptions (0=∞)</label>
+          <input id="couponCreateMaxRed" placeholder="0">
+        </div>
+        <div>
+          <label>Max/Customer (0=∞)</label>
+          <input id="couponCreateMaxPer" placeholder="0">
+        </div>
+        <div>
+          <label>Budget Cap (0=none)</label>
+          <input id="couponCreateBudget" placeholder="0">
+        </div>
+        <div>
+          <label>Active</label>
+          <select id="couponCreateActive">
+            <option value="true" selected>yes</option>
+            <option value="false">no</option>
+          </select>
+        </div>
+        <div style="align-self:end;">
+          <button onclick="uiCreateCoupon()">Create Coupon</button>
+        </div>
+      </div>
+
+      <h4 style="margin-top:20px;">Coupon Requests (Merchant)</h4>
+      <div style="margin:8px 0;">
+        <label>Status</label>
+        <select id="couponReqStatus">
+          <option value="pending" selected>pending</option>
+          <option value="any">any</option>
+          <option value="approved">approved</option>
+          <option value="rejected">rejected</option>
+          <option value="cancelled">cancelled</option>
+        </select>
+        <label style="margin-left:12px;">Request Type</label>
+        <select id="couponReqType">
+          <option value="any" selected>any</option>
+          <option value="new">new</option>
+          <option value="renew">renew</option>
+          <option value="edit">edit</option>
+          <option value="deactivate">deactivate</option>
+        </select>
+        <label style="margin-left:12px;">Merchant ID (optional)</label>
+        <input id="couponReqMerchantId" placeholder="merch_001">
+        <label style="margin-left:12px;">Search (title or request ID)</label>
+        <input id="couponReqSearch" placeholder="cpn_req_123">
+        <button onclick="uiLoadCouponRequests()">Load</button>
+      </div>
+
+      <table id="couponReqTable" border="1" cellpadding="4" cellspacing="0" style="width:100%;max-width:100%;">
+        <thead>
+          <tr>
+            <th>RequestId</th>
+            <th>MerchantId</th>
+            <th>Type</th>
+            <th>Title</th>
+            <th>Value</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Min</th>
+            <th>MaxRed</th>
+            <th>Max/Customer</th>
+            <th>Budget</th>
+            <th>Status</th>
+            <th>CreatedBy</th>
+            <th>CreatedAt</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="couponReqTbody">
+          <!-- filled by JS -->
+        </tbody>
+      </table>
+
+
       <!-- Purge -->
       <fieldset class="section card stack">
         <legend>Purge</legend>
@@ -2355,5 +2505,174 @@ File: Index.html (Admin)  with inactivity and no-flash boot fixes
       .validateASession(sid);
   });
   </script>
+  <script>
+  // ===============================
+  // COUPONS — client side helpers
+  // Assumes the backend provides:
+  //   adminListCoupons(params), adminGetCouponById(couponId),
+  //   adminCreateCoupon(payload),
+  //   adminSearchCouponRequests(filters),
+  //   adminApproveCouponRequest(requestId),
+  //   adminRejectCouponRequest(requestId),
+  //   adminCancelCouponRequest(requestId)
+  // ===============================
+
+  function uiLoadCoupons() {
+    const q = (id)=>document.getElementById(id);
+    const params = {
+      search: q('couponSearchText').value.trim(),
+      merchantId: q('couponFilterMerchantId').value.trim() || null
+    };
+    google.script.run
+      .withSuccessHandler(renderCouponsList)
+      .withFailureHandler(alert)
+      .adminListCoupons(params);
+  }
+
+  function uiRefreshCoupons(){ uiLoadCoupons(); }
+
+  function renderCouponsList(result) {
+    // result = { ok:true, rows:[{id, merchantId, title, value, start, end, minSpend, maxRed, maxPerUser, budget, active}] }
+    const tbody = document.getElementById('couponsTbody');
+    tbody.innerHTML = '';
+    if (!result || !result.ok || !Array.isArray(result.rows)) return;
+    result.rows.forEach(row => {
+      const tr = document.createElement('tr');
+      const cells = [
+        row.id || '—',
+        row.merchantId || '—',
+        row.title || '—',
+        (row.value!=null? row.value : '—'),
+        row.start || '—',
+        row.end || '—',
+        (row.minSpend!=null? row.minSpend : '—'),
+        (row.maxRed!=null? row.maxRed : '—'),
+        (row.maxPerUser!=null? row.maxPerUser : '—'),
+        (row.budget!=null? row.budget : '—'),
+        String(row.active) === 'true' || row.active === true ? 'yes' : 'no',
+        '' // actions
+      ];
+      cells.forEach(c=>{
+        const td = document.createElement('td'); td.textContent=String(c); tr.appendChild(td);
+      });
+      const actTd = tr.lastElementChild;
+      const vBtn = document.createElement('button');
+      vBtn.textContent = 'View';
+      vBtn.onclick = ()=> uiSelectCoupon(row.id);
+      actTd.appendChild(vBtn);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function uiSelectCoupon(couponId){
+    google.script.run
+      .withSuccessHandler(showSelectedCoupon)
+      .withFailureHandler(alert)
+      .adminGetCouponById(String(couponId||''));
+  }
+
+  function showSelectedCoupon(res){
+    // res = { ok:true, coupon:{...} }
+    const blk = document.getElementById('couponSelectedBlock');
+    if (!res || !res.ok || !res.coupon){ blk.style.display='none'; return; }
+    const c = res.coupon;
+    const s = (id, val)=>{ const el=document.getElementById(id); if (el) el.textContent = (val==null||val==='')?'—':String(val); };
+    s('couponSelectedId', c.id);
+    s('couponSelectedTitle', c.title);
+    s('couponSelectedMerchant', c.merchantId);
+    s('couponSelectedValue', c.value);
+    s('couponSelectedStart', c.start);
+    s('couponSelectedEnd', c.end);
+    s('couponSelectedMin', c.minSpend);
+    s('couponSelectedMaxRed', c.maxRed);
+    s('couponSelectedMaxPer', c.maxPerUser);
+    s('couponSelectedBudget', c.budget);
+    s('couponSelectedActive', (String(c.active)==='true'||c.active===true)?'yes':'no');
+    blk.style.display='block';
+  }
+
+  function uiCreateCoupon(){
+    const q = (id)=>document.getElementById(id);
+    const payload = {
+      merchantId: q('couponCreateMerchantId').value.trim(),
+      title: q('couponCreateTitle').value.trim(),
+      value: Number(q('couponCreateValue').value.trim() || '0'),
+      start: q('couponCreateStart').value,
+      end: q('couponCreateEnd').value,
+      minSpend: Number(q('couponCreateMinSpend').value.trim() || '0'),
+      maxRed: Number(q('couponCreateMaxRed').value.trim() || '0'),
+      maxPerUser: Number(q('couponCreateMaxPer').value.trim() || '0'),
+      budget: Number(q('couponCreateBudget').value.trim() || '0'),
+      active: String(q('couponCreateActive').value) === 'true'
+    };
+    if (!payload.merchantId || !payload.title) { alert('Merchant ID and Title are required.'); return; }
+    google.script.run
+      .withSuccessHandler(res=>{
+        if (!res || !res.ok) { alert('Create failed'); return; }
+        alert('Coupon created: '+ (res.id || '(no id)'));
+        uiLoadCoupons();
+      })
+      .withFailureHandler(alert)
+      .adminCreateCoupon(payload);
+  }
+
+  // ---------- Coupon Requests ----------
+  function uiLoadCouponRequests(){
+    const q = (id)=>document.getElementById(id);
+    const filters = {
+      status: q('couponReqStatus').value,
+      type: q('couponReqType').value,
+      merchantId: q('couponReqMerchantId').value.trim() || null,
+      search: q('couponReqSearch').value.trim()
+    };
+    google.script.run
+      .withSuccessHandler(renderCouponRequests)
+      .withFailureHandler(alert)
+      .adminSearchCouponRequests(filters);
+  }
+
+  function renderCouponRequests(res){
+    // res = { ok:true, rows:[{ requestId, merchantId, type, title, value, start, end, min, maxRed, maxPerUser, budget, status, createdBy, createdAt }] }
+    const tbody = document.getElementById('couponReqTbody');
+    tbody.innerHTML = '';
+    if (!res || !res.ok || !Array.isArray(res.rows)) return;
+    res.rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      const cells = [
+        r.requestId, r.merchantId, r.type, r.title, r.value, r.start, r.end,
+        r.min, r.maxRed, r.maxPerUser, r.budget, r.status, r.createdBy, r.createdAt, ''
+      ];
+      cells.forEach(c=>{ const td=document.createElement('td'); td.textContent=String(c==null?'—':c); tr.appendChild(td); });
+      const actTd = tr.lastElementChild;
+
+      const approve = document.createElement('button');
+      approve.textContent='Approve';
+      approve.onclick=()=> google.script.run.withSuccessHandler(uiLoadCouponRequests).withFailureHandler(alert)
+        .adminApproveCouponRequest(String(r.requestId));
+
+      const reject = document.createElement('button');
+      reject.textContent='Reject';
+      reject.onclick=()=> google.script.run.withSuccessHandler(uiLoadCouponRequests).withFailureHandler(alert)
+        .adminRejectCouponRequest(String(r.requestId));
+
+      const cancel = document.createElement('button');
+      cancel.textContent='Cancel';
+      cancel.onclick=()=> google.script.run.withSuccessHandler(uiLoadCouponRequests).withFailureHandler(alert)
+        .adminCancelCouponRequest(String(r.requestId));
+
+      actTd.appendChild(approve);
+      actTd.appendChild(reject);
+      actTd.appendChild(cancel);
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Initialize (optional: auto-load lists on dashboard open)
+  (function initCouponsUI(){
+    const btn = document.getElementById('btnLoadCoupons');
+    if (btn) { try { uiLoadCoupons(); } catch(_){} }
+  })();
+  </script>
+
 </body>
 </html>
