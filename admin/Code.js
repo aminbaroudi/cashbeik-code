@@ -9,7 +9,9 @@ const MERCHANT_DB_ID_KEY= 'MERCHANT_DB_ID'; // (optional) Merchant spreadsheet I
 // Master admin email (for self-reset flow)
 const MASTER_ADMIN_EMAIL_KEY = 'MASTER_ADMIN_EMAIL';
 // Campaign images storage (Drive folder)
-const Campaign_IMG_FOLDER_ID_KEY = '1qEqpw60R_8Ki4XR2oIGmJCQBOFf6EQO8';
+// AFTER
+const Campaign_IMG_FOLDER_ID_KEY = 'CAMPAIGN_IMG_FOLDER_ID';  // human key, not a folder ID
+
 
 
 // Set once from the Config panel (or console):
@@ -2179,4 +2181,3 @@ function hashPin_(pin) {
   return bytes.map(b => (b + 256) % 256).map(b => ('0' + b.toString(16)).slice(-2)).join('');
 }
 function genSid_() { return 's_' + Utilities.getUuid().replace(/-/g,''); }
-
