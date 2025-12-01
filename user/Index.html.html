@@ -939,6 +939,7 @@
           startInactivityTimer_();
           show(viewIfOk);
 document.getElementById('btn-logout').style.display = 'inline-block';
+document.getElementById('btn-logout').style.display = 'inline-block';
           if (viewIfOk === 'member') {
             fetchMemberSummary_();
             fetchActiveCampaigns_(); // ADDED
@@ -947,7 +948,7 @@ document.getElementById('btn-logout').style.display = 'inline-block';
           return true;
         } else {
           clearSid();
-          stopInactivityTimer_();document.getElementById('btn-logout').style.display = 'none';
+          stopInactivityTimer_();document.getElementById('btn-logout').style.display = 'none';document.getElementById('btn-logout').style.display = 'none';
           show('signin');
           return false;
         }
@@ -1736,9 +1737,19 @@ setTimeout(function(){
     if (!loggedIn && !memberVisible) { clearSid(); navigateGuarded_('signin'); }
   } catch(_) {}
 }, 8000);
+setTimeout(function(){
+  try {
+    var logoutBtn = document.getElementById('btn-logout');
+    var loggedIn = (logoutBtn && logoutBtn.style.display !== 'none');
+    var memberView = document.getElementById('view-member');
+    var memberVisible = (memberView && !memberView.classList.contains('hidden'));
+    if (!loggedIn && !memberVisible) { clearSid(); navigateGuarded_('signin'); }
+  } catch(_) {}
+}, 8000);
       });
     })();
   </script>
 </body>
 </html>
+
 

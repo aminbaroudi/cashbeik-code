@@ -149,6 +149,7 @@ function getMasterAdminUsername_(){ return String(ASP.getProperty('MASTER_ADMIN_
 function adminMasterSendSelfResetLink(sid){
   const caller = ensureAdminActive_(sid);
 ensureCampaignsShape_();
+ensureCampaignsShape_();
   if (!isMasterAdminCaller_(caller.username)) throw new Error('Only master admin can request this link.');
   const email = getMasterAdminEmail_();
   if (!email) throw new Error('Master admin email not configured.');
@@ -936,7 +937,7 @@ function adminCreateCampaign(sid, payload){
 
   const { campaigns } = getUserDb_();
   const id = _genCampaignId_();
-  ensureCampaignsShape_(); // <<< NEWensureCampaignsShape_();
+  ensureCampaignsShape_(); // <<< NEWensureCampaignsShape_();ensureCampaignsShape_();
   campaigns.appendRow([
     id, merchantId, title, type, multiplier,
     startIso, endIso, minSpend, maxRed, maxPerCustomer, budgetCap,
@@ -1576,7 +1577,6 @@ function getUserDb_() {
   ]);
   // ── NEW: Campaigns analytics ──
   const campaigns   = ensureSheet_(ss, 'Campaigns', [
-ensureCampaignsShape_();
     'CampaignId','MerchantId','Title','Type','Multiplier',
     'StartIso','EndIso','MinSpend','MaxRedemptions','MaxPerCustomer',
     'BudgetCap','BillingModel','CostPerRedemption','Active','CreatedAt',
@@ -1585,11 +1585,12 @@ ensureCampaignsShape_();
     'PerMemberRedemptions', 'PerMemberBonusCap'
   ]);
 
-  ensureCampaignsShape_(); // <<< NEW: heal header drift now
+  // <<< NEW: heal header drift now
 
   const CampaignActivations = ensureSheet_(ss, 'CampaignActivations', [
     'ActivationId','CampaignId','MemberId','ActivatedAtMs','ExpiresAtMs','Source','Notes'
   ]);
+ensureCampaignsShape_();
   const CampaignRedemptions = ensureSheet_(ss, 'CampaignRedemptions', [
     'RedemptionId','CampaignId','MemberId','MerchantId','TxId','AtMs',
     'BasePoints','Multiplier','BonusPoints','CostAccrued'
@@ -2362,4 +2363,5 @@ function findCouponRowByCodeAndMid_(couponsSheet, code, merchantId) {
   }
   return 0;
 }
+
 
