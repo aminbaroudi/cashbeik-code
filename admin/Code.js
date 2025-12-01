@@ -1,4 +1,4 @@
-// ===============================
+﻿// ===============================
 // File: Code.gs  (Admin App)
 // ===============================
 
@@ -148,6 +148,7 @@ function getMasterAdminUsername_(){ return String(ASP.getProperty('MASTER_ADMIN_
 
 function adminMasterSendSelfResetLink(sid){
   const caller = ensureAdminActive_(sid);
+ensureCampaignsShape_();
   if (!isMasterAdminCaller_(caller.username)) throw new Error('Only master admin can request this link.');
   const email = getMasterAdminEmail_();
   if (!email) throw new Error('Master admin email not configured.');
@@ -935,7 +936,7 @@ function adminCreateCampaign(sid, payload){
 
   const { campaigns } = getUserDb_();
   const id = _genCampaignId_();
-  ensureCampaignsShape_(); // <<< NEW
+  ensureCampaignsShape_(); // <<< NEWensureCampaignsShape_();
   campaigns.appendRow([
     id, merchantId, title, type, multiplier,
     startIso, endIso, minSpend, maxRed, maxPerCustomer, budgetCap,
@@ -1575,6 +1576,7 @@ function getUserDb_() {
   ]);
   // ── NEW: Campaigns analytics ──
   const campaigns   = ensureSheet_(ss, 'Campaigns', [
+ensureCampaignsShape_();
     'CampaignId','MerchantId','Title','Type','Multiplier',
     'StartIso','EndIso','MinSpend','MaxRedemptions','MaxPerCustomer',
     'BudgetCap','BillingModel','CostPerRedemption','Active','CreatedAt',
@@ -2360,3 +2362,4 @@ function findCouponRowByCodeAndMid_(couponsSheet, code, merchantId) {
   }
   return 0;
 }
+

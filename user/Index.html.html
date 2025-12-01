@@ -1,4 +1,4 @@
-<!-- File: Index.html (User app) -->
+﻿<!-- File: Index.html (User app) -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -215,7 +215,8 @@
       overflow-x: hidden;
     }
 
-  </style>
+  #btn-logout { display: none; }
+</style>
 </head>
 <body>
   <div class="container">
@@ -937,6 +938,7 @@
           normalizeViewport();                  // add
           startInactivityTimer_();
           show(viewIfOk);
+document.getElementById('btn-logout').style.display = 'inline-block';
           if (viewIfOk === 'member') {
             fetchMemberSummary_();
             fetchActiveCampaigns_(); // ADDED
@@ -945,7 +947,7 @@
           return true;
         } else {
           clearSid();
-          stopInactivityTimer_();
+          stopInactivityTimer_();document.getElementById('btn-logout').style.display = 'none';
           show('signin');
           return false;
         }
@@ -1725,8 +1727,18 @@
             }
           })
           .getFlags();
+setTimeout(function(){
+  try {
+    var logoutBtn = document.getElementById('btn-logout');
+    var loggedIn = (logoutBtn && logoutBtn.style.display !== 'none');
+    var memberView = document.getElementById('view-member');
+    var memberVisible = (memberView && !memberView.classList.contains('hidden'));
+    if (!loggedIn && !memberVisible) { clearSid(); navigateGuarded_('signin'); }
+  } catch(_) {}
+}, 8000);
       });
     })();
   </script>
 </body>
 </html>
+
