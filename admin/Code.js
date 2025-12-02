@@ -918,7 +918,7 @@ function adminCreateCampaign(sid, payload){
   const p = payload || {};
   const merchantId = String(p.merchantId||'').trim().toUpperCase();
   const title      = String(p.title||'').trim();
-  const type       = 'multiplier'; // future-proof (we only support merchant-wide multipliers now)
+  // const type    = 'multiplier'; // keep for logic if you want, BUT DO NOT write it to the sheet
   const multiplier = Math.max(1, Number(p.multiplier||1));
   const startIso   = String(p.startIso||'').trim();
   const endIso     = String(p.endIso||'').trim();
@@ -939,11 +939,32 @@ function adminCreateCampaign(sid, payload){
 
   const { campaigns } = getUserDb_();
   const id = _genCampaignId_();
+  const now = _nowIso_();
+
+  // Header (for reference):
+  // A:CampaignId B:MerchantId C:Title D:Multiplier E:Start F:End G:MinSpend H:MaxRed
+  // I:MaxPerCustomer J:Budget K:BillingModel L:CostPerRedemption M:Active
+  // N:ImageFileId O:ImagePublicUrl P:CreatedAt Q:UpdatedAt
   campaigns.appendRow([
-    id, merchantId, title, type, multiplier,
-    startIso, endIso, minSpend, maxRed, maxPerCustomer, budgetCap,
-    billModel, cpr, !!active, _nowIso_(), _nowIso_()
+    id,                   // A
+    merchantId,           // B
+    title,                // C
+    multiplier,           // D  (number, NOT the string 'multiplier')
+    startIso,             // E
+    endIso,               // F
+    minSpend,             // G
+    maxRed,               // H
+    maxPerCustomer,       // I
+    budgetCap,            // J
+    billModel,            // K
+    cpr,                  // L
+    !!active,             // M
+    '',                   // N  ImageFileId (empty for now)
+    '',                   // O  ImagePublicUrl (empty for now)
+    now,                  // P  CreatedAt
+    now                   // Q  UpdatedAt
   ]);
+
   return { ok:true, campaignId:id };
 }
 
@@ -1536,10 +1557,15 @@ function adminCreateCoupon(payload) {
     sh.getRange(1, 1, 1, width).setValues([HEADER]);
   }
 
-  // Simple validation
+  // Simple validation + normalization to match Merchant rules (ALL CAPS, A-Z0-9 and underscores only)
   const merchantId = String(payload.merchantId || '').trim();
-  const title = String(payload.title || '').trim();
+  let title = String(payload.title || '').trim();
   if (!merchantId || !title) throw new Error('merchantId and title are required.');
+
+  // normalize title/code: uppercase, replace spaces with underscore, strip invalid chars
+  title = title.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
+  if (!title) throw new Error('coupon title becomes empty after normalization; use A-Z, 0-9, underscore only.');
+
 
   const nowIso = new Date().toISOString();
   const couponId = 'cpn_' + Utilities.getUuid().replace(/-/g, '').slice(0, 12);
@@ -1547,7 +1573,7 @@ function adminCreateCoupon(payload) {
   const row = [
     couponId,
     merchantId,
-    title,
+    title, // normalized ALL-CAPS A-Z0-9_
     Number(payload.value || 0),
     String(payload.start || ''),
     String(payload.end || ''),
