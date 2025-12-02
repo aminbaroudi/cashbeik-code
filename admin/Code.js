@@ -375,6 +375,8 @@ function adminListAdmins(sid) {
   }));
 }
 
+
+
 function adminSetAdminActive(sid, targetUsername, active) {
   const caller = ensureAdminActive_(sid);
   if (!isMasterAdminCaller_(caller.username)) throw new Error('Only master admin can change admin status.');
@@ -1494,6 +1496,147 @@ function _upsertCouponFromPayload_(couponsSheet, p){
   }
 }
 
+// ===== COUPONS: core endpoints used by admin/Index.html =====
+function adminCreateCoupon(payload) {
+  // Expected payload: {
+  //   merchantId, title, value, start, end, minSpend, maxRed, maxPerUser, budget, active
+  // }
+  payload = payload || {};
+  const uid = PropertiesService.getScriptProperties().getProperty('USER_DB_ID');
+  if (!uid) throw new Error('USER_DB_ID not configured.');
+  const ss = SpreadsheetApp.openById(uid);
+
+  // Ensure sheet + header
+  const sheetName = 'Coupons';
+  let sh = ss.getSheetByName(sheetName);
+  if (!sh) sh = ss.insertSheet(sheetName);
+
+  const HEADER = [
+    'CouponId',       // A
+    'MerchantId',     // B
+    'Title',          // C
+    'Value',          // D  (number; semantic is up to your app)
+    'Start',          // E
+    'End',            // F
+    'MinSpend',       // G
+    'MaxRed',         // H
+    'MaxPerUser',     // I
+    'Budget',         // J
+    'Active',         // K (TRUE/FALSE)
+    'CreatedAt',      // L
+    'UpdatedAt'       // M
+  ];
+  // Write header if missing or wrong width
+  const width = HEADER.length;
+  if (sh.getLastRow() === 0) {
+    sh.getRange(1, 1, 1, width).setValues([HEADER]);
+  } else {
+    // normalize header width
+    if (sh.getMaxColumns() < width) sh.insertColumnsAfter(sh.getMaxColumns(), width - sh.getMaxColumns());
+    sh.getRange(1, 1, 1, width).setValues([HEADER]);
+  }
+
+  // Simple validation
+  const merchantId = String(payload.merchantId || '').trim();
+  const title = String(payload.title || '').trim();
+  if (!merchantId || !title) throw new Error('merchantId and title are required.');
+
+  const nowIso = new Date().toISOString();
+  const couponId = 'cpn_' + Utilities.getUuid().replace(/-/g, '').slice(0, 12);
+
+  const row = [
+    couponId,
+    merchantId,
+    title,
+    Number(payload.value || 0),
+    String(payload.start || ''),
+    String(payload.end || ''),
+    Number(payload.minSpend || 0),
+    Number(payload.maxRed || 0),
+    Number(payload.maxPerUser || 0),
+    Number(payload.budget || 0),
+    String(payload.active) === 'true' || payload.active === true,
+    nowIso,
+    nowIso
+  ];
+  sh.appendRow(row);
+  return { ok: true, id: couponId };
+}
+
+function adminListCoupons(params) {
+  params = params || {};
+  const uid = PropertiesService.getScriptProperties().getProperty('USER_DB_ID');
+  if (!uid) throw new Error('USER_DB_ID not configured.');
+  const ss = SpreadsheetApp.openById(uid);
+  const sh = ss.getSheetByName('Coupons');
+  if (!sh || sh.getLastRow() < 2) return { ok: true, rows: [] };
+
+  const header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  const idx = {};
+  header.forEach((h, i) => idx[String(h)] = i);
+  const values = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+
+  const q = String(params.search || '').toLowerCase();
+  const filterMerchant = String(params.merchantId || '').trim();
+
+  const rows = values.map(r => ({
+    id: r[idx['CouponId']] || '',
+    merchantId: r[idx['MerchantId']] || '',
+    title: r[idx['Title']] || '',
+    value: r[idx['Value']] || '',
+    start: r[idx['Start']] || '',
+    end: r[idx['End']] || '',
+    minSpend: r[idx['MinSpend']] || '',
+    maxRed: r[idx['MaxRed']] || '',
+    maxPerUser: r[idx['MaxPerUser']] || '',
+    budget: r[idx['Budget']] || '',
+    active: r[idx['Active']] || ''
+  })).filter(row => {
+    if (filterMerchant && row.merchantId !== filterMerchant) return false;
+    if (q && !((row.id||'').toLowerCase().includes(q) || (row.title||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  return { ok: true, rows };
+}
+
+function adminGetCouponById(couponId) {
+  couponId = String(couponId || '').trim();
+  if (!couponId) return { ok: false, reason: 'missing id' };
+
+  const uid = PropertiesService.getScriptProperties().getProperty('USER_DB_ID');
+  if (!uid) throw new Error('USER_DB_ID not configured.');
+  const ss = SpreadsheetApp.openById(uid);
+  const sh = ss.getSheetByName('Coupons');
+  if (!sh || sh.getLastRow() < 2) return { ok: false, reason: 'not found' };
+
+  const header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  const idx = {};
+  header.forEach((h, i) => idx[String(h)] = i);
+  const values = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
+
+  for (var i = 0; i < values.length; i++) {
+    const r = values[i];
+    if (String(r[idx['CouponId']]) === couponId) {
+      const coupon = {
+        id: r[idx['CouponId']] || '',
+        merchantId: r[idx['MerchantId']] || '',
+        title: r[idx['Title']] || '',
+        value: r[idx['Value']] || '',
+        start: r[idx['Start']] || '',
+        end: r[idx['End']] || '',
+        minSpend: r[idx['MinSpend']] || '',
+        maxRed: r[idx['MaxRed']] || '',
+        maxPerUser: r[idx['MaxPerUser']] || '',
+        budget: r[idx['Budget']] || '',
+        active: r[idx['Active']] || ''
+      };
+      return { ok: true, coupon };
+    }
+  }
+  return { ok: false, reason: 'not found' };
+}
+
 // ───────────────────────────── Helpers
 function getLocalDb_() {
   const ss = SpreadsheetApp.getActive();
@@ -2181,3 +2324,6 @@ function hashPin_(pin) {
   return bytes.map(b => (b + 256) % 256).map(b => ('0' + b.toString(16)).slice(-2)).join('');
 }
 function genSid_() { return 's_' + Utilities.getUuid().replace(/-/g,''); }
+
+
+
